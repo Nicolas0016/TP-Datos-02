@@ -41,14 +41,14 @@ visualización.
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-#%% CARGA DE DATOS
-# ============================================================================
-# 
-# ===============================================================================
-"""
-Carga del dataset desde el archivo CSV.
-Se realiza una verificación inicial de la estructura de los datos.
-"""
+#%% FUNCIONES UTILIZADAS DURANTE EL INFORME
+def conteo_de_letters(df):
+    conteo = {}
+    for _, row in df.iterrows():
+        if row['label'] not in conteo:
+            conteo[row['label']] = 0
+        conteo[row['label']] +=1
+    return conteo
 def cargar_datos(ruta_archivo: str) -> pd.DataFrame:
     """
     Carga el dataset desde un archivo CSV.
@@ -78,13 +78,6 @@ def remane_labels(df):
     
     df['label'] = df['label'].replace(rename)
     return df
-
-DATA_PATH = './data/letras.csv'
-df = cargar_datos(DATA_PATH)
-df =  remane_labels(df)
-
-#%% FUNCION PARA VISUALIZAR LETRAS
-
 def mostrar_imagen_letra(df, indice, columna_label='label', dimension=(28, 28)):
     """
     Muestra una imagen de letra a partir de su índice en el DataFrame.
@@ -117,8 +110,11 @@ def mostrar_imagen_letra(df, indice, columna_label='label', dimension=(28, 28)):
     
     return img
 
+#%% CARGA DE DATOS
 
-
+DATA_PATH = './data/letras.csv'
+df = cargar_datos(DATA_PATH)
+df =  remane_labels(df)
 
 #%% Análisis exploratorio
 
@@ -147,13 +143,6 @@ print(f"Cantidad de elementos nulos: {df.isnull().sum().sum()}")
 # =============================================================================
 #### Cantidad de clases de interes de la variable de interés (la letra representada) 
 # =============================================================================
-def conteo_de_letters(df):
-    conteo = {}
-    for _, row in df.iterrows():
-        if row['label'] not in conteo:
-            conteo[row['label']] = 0
-        conteo[row['label']] +=1
-    return conteo
 
 # =============================================================================
 #### Distribución de letras
