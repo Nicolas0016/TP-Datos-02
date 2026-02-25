@@ -105,3 +105,54 @@ plt.figtext(0.5, 0.01, "FIGURA 1: Distribución de letras en el dataset",
             ha="center", fontsize=10, style='italic')
 plt.show()
 
+
+# %% PUNTO B
+
+def comparar_letras_superposicion(df, letra1, letra2,dimension=(28, 28)):#le saqué el contador de figuras
+    """
+    Compara dos letras superponiéndolas.
+    - Fondo blanco (255): píxeles iguales
+    - Rojo: píxeles que pertenecen a letra1
+    - Azul: píxeles que pertenecen a letra2
+    """
+    idx1 = df[df['label'] == letra1].index[0]
+    idx2 = df[df['label'] == letra2].index[0]
+    
+    X = df.drop(columns=['label'])
+    
+    img1 = np.array(X.iloc[idx1]).reshape(dimension[0], dimension[1])
+    img2 = np.array(X.iloc[idx2]).reshape(dimension[0], dimension[1])
+    
+    img_superpuesta = np.ones((dimension[0], dimension[1], 3))  # Fondo blanco (1,1,1)
+    
+    mask_ambas = (img1 < 128) & (img2 < 128)
+    img_superpuesta[mask_ambas] = [0, 1, 0]  # Verde
+    
+    # Visualizar
+    fig, axes = plt.subplots(1, 3, figsize=(16, 4))
+    
+    axes[0].imshow(img1, cmap='gray')
+    axes[0].set_title(f'Letra {letra1}', fontsize=14, fontweight='bold')
+    axes[0].axis('off')
+    
+    axes[1].imshow(img2, cmap='gray')
+    axes[1].set_title(f'Letra {letra2}', fontsize=14, fontweight='bold')
+    axes[1].axis('off')
+    
+    axes[2].imshow(img_superpuesta)
+    axes[2].set_title('Superposición', fontsize=14, fontweight='bold')
+    axes[2].axis('off')
+    
+    plt.suptitle(f'Comparación {letra1} vs {letra2} - Superposición', 
+                 fontsize=16, fontweight='bold')
+    plt.tight_layout()
+    plt.figtext(0.5, 0.01, f"FIGURA 1.b: Comparación {letra1} vs {letra2}", 
+                ha="center", fontsize=10, style='italic')
+    plt.show()
+    
+    return img_superpuesta
+
+#comparamos las letras pedidas
+comparar_letras_superposicion(df, 'S', 'M')
+comparar_letras_superposicion(df, 'O', 'Q')
+# %%
