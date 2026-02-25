@@ -7,3 +7,4 @@ TP-02-NOMBREGRUPO/
 │
 ├── 📂 data/                                # Carpeta para datos (opcional)
 │   └── [x] (dataset descargado)
+
