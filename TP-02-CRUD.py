@@ -267,11 +267,13 @@ comparar_letras_superposicion(df, 'O', 'Q', contador_figuras)
 contador_figuras += 1
 comparar_letras_superposicion(df, 'I', 'T', contador_figuras)
 contador_figuras += 1
-comparar_letras_superposicion(df, 'I', 'J', contador_figuras)
+comparar_letras_superposicion(df, 'C', 'G', contador_figuras)
 contador_figuras += 1
 comparar_letras_superposicion(df, 'P', 'R', contador_figuras)
-
-
+contador_figuras += 1
+comparar_letras_superposicion(df, 'C', 'O', contador_figuras)
+contador_figuras += 1
+comparar_letras_superposicion(df, 'I', 'L', contador_figuras)
 # =============================================================================
 #### FUNCIÓN PARA VISUALIZAR MÚLTIPLES MUESTRAS DE UNA LETRA
 # =============================================================================
@@ -306,4 +308,4 @@ def visualizar_tipografia_letra(df, letra, contador_figuras,n_muestras=9, dimens
                 ha="center", fontsize=10, style='italic')
     plt.show()
 contador_figuras += 1
-visualizar_variabilidad_letra(df, 'A', contador_figuras)
+visualizar_tipografia_letra(df, 'A', contador_figuras)
