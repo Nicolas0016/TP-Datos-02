@@ -51,7 +51,7 @@ def cargar_datos(ruta_archivo: str) -> pd.DataFrame:
     """
     Carga el dataset desde un archivo CSV.
     
-    Parameters
+    Parametros
     ----------
     ruta_archivo : str
         Ruta al archivo CSV con los datos
@@ -80,7 +80,7 @@ def mostrar_imagen_letra(df, indice, columna_label='label', dimension=(28, 28)):
     """
     Muestra una imagen de letra a partir de su índice en el DataFrame.
     
-    Parameters
+    Parametros
     ----------
     df : pd.DataFrame
         DataFrame con los datos
@@ -106,7 +106,7 @@ def mostrar_imagen_letra(df, indice, columna_label='label', dimension=(28, 28)):
     return img
 
 #%% CARGA DE DATOS
-
+contador_figuras = 0
 DATA_PATH = './data/letras.csv'
 df = cargar_datos(DATA_PATH)
 df =  remane_labels(df)
@@ -162,7 +162,7 @@ print(f"Ratio max/min: {ratio}")
 # =============================================================================
 #### Visualización
 # =============================================================================
-
+contador_figuras += 1
 plt.figure(figsize=(15,6))
 letras = conteo_letras.keys()
 cantidades = [conteo_letras[letra] for letra in letras]
@@ -171,7 +171,7 @@ barras = plt.bar(letras, cantidades)
 plt.title("Distribución de letras en el df")
 plt.xlabel("letra")
 plt.ylabel("cantidad de muestras")
-plt.figtext(0.5, 0.01, "FIGURA 1: Distribución de letras en el dataset", 
+plt.figtext(0.5, 0.01, f"FIGURA {contador_figuras}: Distribución de letras en el dataset", 
             ha="center", fontsize=10, style='italic')
 plt.show()
 
@@ -182,12 +182,11 @@ plt.show()
 # =============================================================================
 #### Función para Visualizar Grilla completa
 # =============================================================================
-def visualizar_todas_letras_grilla(df, dimension=(28, 28), tipografia=0):
+def visualizar_todas_letras_grilla(df,contador_figuras, dimension=(28, 28), tipografia=0):
     """
     Muestra una grilla con todas las letras del alfabeto (primera muestra de cada una).
     """
     letras_unicas = df['label'].unique()
-    
     cols = 6
     rows = 5
     
@@ -210,13 +209,16 @@ def visualizar_todas_letras_grilla(df, dimension=(28, 28), tipografia=0):
     plt.suptitle('Todas las Letras del Alfabeto', 
                  fontsize=16, fontweight='bold', y=1.02)
     plt.tight_layout()
+    plt.figtext(0.5, 0.01, f"FIGURA {contador_figuras}: Distribución de letras en el dataset", 
+                ha="center", fontsize=10, style='italic')
     plt.show()
-visualizar_todas_letras_grilla(df)
+contador_figuras += 1
+visualizar_todas_letras_grilla(df,contador_figuras)
 
 # =============================================================================
 #### FUNCIÓN PARA COMPARAR PARES DE LETRAS
 # =============================================================================
-def comparar_letras_superposicion(df, letra1, letra2, dimension=(28, 28)):
+def comparar_letras_superposicion(df, letra1, letra2, contador_figuras,dimension=(28, 28)):
     """
     Compara dos letras superponiéndolas.
     - Fondo blanco (255): píxeles iguales
@@ -254,20 +256,27 @@ def comparar_letras_superposicion(df, letra1, letra2, dimension=(28, 28)):
     plt.suptitle(f'Comparación {letra1} vs {letra2} - Superposición', 
                  fontsize=16, fontweight='bold')
     plt.tight_layout()
+    plt.figtext(0.5, 0.01, f"FIGURA {contador_figuras}: Comparación {letra1} vs {letra2}", 
+                ha="center", fontsize=10, style='italic')
     plt.show()
     
     return img_superpuesta
-comparar_letras_superposicion(df, 'O', 'Q')
-comparar_letras_superposicion(df, 'I', 'T')
-comparar_letras_superposicion(df, 'I', 'J')
-comparar_letras_superposicion(df, 'P', 'R')
+
+contador_figuras += 1
+comparar_letras_superposicion(df, 'O', 'Q', contador_figuras)
+contador_figuras += 1
+comparar_letras_superposicion(df, 'I', 'T', contador_figuras)
+contador_figuras += 1
+comparar_letras_superposicion(df, 'I', 'J', contador_figuras)
+contador_figuras += 1
+comparar_letras_superposicion(df, 'P', 'R', contador_figuras)
 
 
 # =============================================================================
 #### FUNCIÓN PARA VISUALIZAR MÚLTIPLES MUESTRAS DE UNA LETRA
 # =============================================================================
 
-def visualizar_variabilidad_letra(df, letra, n_muestras=9, dimension=(28, 28)):
+def visualizar_variabilidad_letra(df, letra, contador_figuras,n_muestras=9, dimension=(28, 28)):
     """
     Muestra múltiples muestras de una misma letra para ver variabilidad.
     """
@@ -293,5 +302,8 @@ def visualizar_variabilidad_letra(df, letra, n_muestras=9, dimension=(28, 28)):
     
     plt.suptitle(f'Variabilidad en Letra {letra} - {len(indices)} muestras de 1016', 
                  fontsize=16, fontweight='bold')
+    plt.figtext(0.5, 0.01, f"FIGURA {contador_figuras}: Variabilidad en letra {letra}", 
+                ha="center", fontsize=10, style='italic')
     plt.show()
-visualizar_variabilidad_letra(df, 'A')
+contador_figuras += 1
+visualizar_variabilidad_letra(df, 'A', contador_figuras)
