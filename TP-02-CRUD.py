@@ -276,7 +276,7 @@ comparar_letras_superposicion(df, 'P', 'R', contador_figuras)
 #### FUNCIÓN PARA VISUALIZAR MÚLTIPLES MUESTRAS DE UNA LETRA
 # =============================================================================
 
-def visualizar_variabilidad_letra(df, letra, contador_figuras,n_muestras=9, dimension=(28, 28)):
+def visualizar_tipografia_letra(df, letra, contador_figuras,n_muestras=9, dimension=(28, 28)):
     """
     Muestra múltiples muestras de una misma letra para ver variabilidad.
     """
