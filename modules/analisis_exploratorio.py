@@ -108,7 +108,7 @@ plt.show()
 
 # %% PUNTO B
 
-def comparar_letras_superposicion(df, letra1, letra2,dimension=(28, 28)):#le saqué el contador de figuras
+def comparar_letras_superposicion(df, letra1, letra2, contador_figura ,dimension=(28, 28)):
     """
     Compara dos letras superponiéndolas.
     - Fondo blanco (255): píxeles iguales
@@ -146,13 +146,16 @@ def comparar_letras_superposicion(df, letra1, letra2,dimension=(28, 28)):#le saq
     plt.suptitle(f'Comparación {letra1} vs {letra2} - Superposición', 
                  fontsize=16, fontweight='bold')
     plt.tight_layout()
-    plt.figtext(0.5, 0.01, f"FIGURA 1.b: Comparación {letra1} vs {letra2}", 
+    plt.figtext(0.5, 0.01, f"FIGURA {contador_figura}: Comparación {letra1} vs {letra2}", 
                 ha="center", fontsize=10, style='italic')
     plt.show()
     
     return img_superpuesta
 
-#comparamos las letras pedidas
-comparar_letras_superposicion(df, 'S', 'M')
-comparar_letras_superposicion(df, 'O', 'Q')
+#comparamos las letras pedidas en el 1.b
+comparar_letras_superposicion(df, 'S', 'M',"1.b")
+comparar_letras_superposicion(df, 'O', 'Q',"1.b")
+
+#1.c
+comparar_letras_superposicion(df, 'O', 'J',"1.c")
 # %%
