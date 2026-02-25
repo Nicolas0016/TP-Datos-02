@@ -36,7 +36,8 @@ def cargar_datos(ruta_archivo: str) -> pd.DataFrame:
         return df
     except FileNotFoundError:
         print("No se encontró el archivo")
-
+DATA_PATH = '../data/letras.csv'
+df = cargar_datos(DATA_PATH)
 def remane_labels(df):
     letters_upper = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z']
     index_label = list(range(len(letters_upper)))
@@ -45,10 +46,8 @@ def remane_labels(df):
     
     df['label'] = df['label'].replace(rename)
     return df
-
-DATA_PATH = './data/letras.csv'
-df = cargar_datos(DATA_PATH)
 df =  remane_labels(df)
+
 #%% TOTAL DE MUESTRAS
 print(f"Total de muestras: {len(df)}")
 
@@ -105,3 +104,4 @@ plt.ylabel("cantidad de muestras")
 plt.figtext(0.5, 0.01, "FIGURA 1: Distribución de letras en el dataset", 
             ha="center", fontsize=10, style='italic')
 plt.show()
+
