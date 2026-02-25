@@ -30,9 +30,7 @@ Estructura del código:
 """
 
 
-#%% ============================================================================
-# IMPORTS Y CONFIGURACIÓN INICIAL
-# ===============================================================================
+#%% IMPORTS Y CONFIGURACIÓN INICIAL
 """
 Módulos necesarios para el procesamiento de datos, visualización y modelado.
 Se importan todas las bibliotecas requeridas y se configura el entorno de
