@@ -39,6 +39,9 @@ visualización.
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import accuracy_score
 #%% FUNCIONES UTILIZADAS DURANTE EL INFORME
 def conteo_de_letters(df):
     conteo = {}
@@ -111,13 +114,12 @@ DATA_PATH = './data/letras.csv'
 df = cargar_datos(DATA_PATH)
 df =  remane_labels(df)
 
-#%% Análisis exploratorio
+#%% ANÁLISIS EXPLORATORIO
 
 # =============================================================================
 #### TOTAL DE MUESTRAS
 # =============================================================================
 print(f"Total de muestras: {len(df)}")
-
 
 # =============================================================================
 #### TOTAL DE ATRIBUTOS
@@ -219,12 +221,6 @@ visualizar_todas_letras_grilla(df,contador_figuras)
 #### FUNCIÓN PARA COMPARAR PARES DE LETRAS
 # =============================================================================
 def comparar_letras_superposicion(df, letra1, letra2, contador_figuras,dimension=(28, 28)):
-    """
-    Compara dos letras superponiéndolas.
-    - Fondo blanco (255): píxeles iguales
-    - Rojo: píxeles que pertenecen a letra1
-    - Azul: píxeles que pertenecen a letra2
-    """
     idx1 = df[df['label'] == letra1].index[0]
     idx2 = df[df['label'] == letra2].index[0]
     
@@ -235,7 +231,7 @@ def comparar_letras_superposicion(df, letra1, letra2, contador_figuras,dimension
     
     img_superpuesta = np.ones((dimension[0], dimension[1], 3))  # Fondo blanco (1,1,1)
     
-    mask_ambas = (img1 < 128) & (img2 < 128)
+    mask_ambas = (img1 < 200) & (img2 < 200)
     img_superpuesta[mask_ambas] = [0, 1, 0]  # Verde
     
     # Visualizar
@@ -278,14 +274,14 @@ comparar_letras_superposicion(df, 'I', 'L', contador_figuras)
 #### FUNCIÓN PARA VISUALIZAR MÚLTIPLES MUESTRAS DE UNA LETRA
 # =============================================================================
 
-def visualizar_tipografia_letra(df, letra, contador_figuras,n_muestras=9, dimension=(28, 28)):
+def visualizar_tipografia_letra(df, letra, contador_figuras,n_muestras=49, dimension=(28, 28)):
     """
     Muestra múltiples muestras de una misma letra para ver variabilidad.
     """
     df_letra = df[df['label'] == letra]
     indices = df_letra.head(n_muestras).index.tolist()
     
-    cols = int(n_muestras**(1/2))
+    cols = int(n_muestras**(1/2)) # sqrt 
     rows = int(n_muestras/cols)
     
     fig, axes = plt.subplots(rows, cols, figsize=(12, rows*3))
@@ -308,4 +304,103 @@ def visualizar_tipografia_letra(df, letra, contador_figuras,n_muestras=9, dimens
                 ha="center", fontsize=10, style='italic')
     plt.show()
 contador_figuras += 1
-visualizar_tipografia_letra(df, 'A', contador_figuras)
+visualizar_tipografia_letra(df, 'O', contador_figuras)
+#%% CLASIFICACIÓN BINARIA
+
+# =============================================================================
+#### Subconjunto de imágenes correspondientes a las letras O y L
+# =============================================================================
+df_letra_O = df[(df['label'] == 'O')]
+df_letra_L = df[(df['label'] == 'L')]
+
+df_letras_OL = pd.concat([df_letra_O,df_letra_L])
+
+print("Muestras de O:",len(df_letra_O))
+print("Muestras de L:",len(df_letra_L))
+print("Total de muestras:",len(df_letra_O)+len(df_letra_L))
+# =============================================================================
+# 
+# # Falta: determinar si está balanceado con respecto a las 
+# # dos clases a predecir (si la imagen es de la letra O o de la letra L).
+# 
+# =============================================================================
+
+# =============================================================================
+#### Separar los datos en conjuntos de train y test
+# =============================================================================
+
+X = df_letras_OL
+
+y = df_letras_OL['label']
+
+X_train, X_test, y_train, y_test = train_test_split(X, y,test_size=0.3,stratify=y)
+
+print(f"Train: {len(X_train)} muestras")
+print(f"Test: {len(X_test)} muestras")
+print("\nDistribución en train:")
+print(y_train.value_counts())
+print("\nDistribución en test:")
+print(y_test.value_counts())
+
+# =============================================================================
+#### modelo de KNN sobre los datos de entrenamiento utilizando una cantidad 
+### reducida de atributos(3)
+# =============================================================================
+#desviaciones = X_train.std().sort_values(ascending = False)
+
+df_letra_O = X_train[X_train['label']=='O'].drop(columns=['label'])
+df_letra_L = X_train[X_train['label']=='L'].drop(columns=['label'])
+def rango_intercuartil(df):
+    Q1 = df.quantile(0.25)
+    Q3 = df.quantile(0.75)
+
+    # Calcular el Rango Intercuartil (IQR)
+    IQR = Q3 - Q1
+    return IQR
+
+IQRO = rango_intercuartil(df_letra_O)
+IQRL = rango_intercuartil(df_letra_L)
+IQR = ((IQRL-IQRO)**2)**(1/2)
+IQR_con_mayor = IQR.sort_values(ascending = False)
+
+img = np.array(IQR).reshape(28, 28)
+plt.figure(figsize=(5, 5))
+plt.imshow(img, cmap='gray')
+plt.axis('off')
+plt.show()
+
+img = np.array(IQRL).reshape(28, 28)
+plt.figure(figsize=(5, 5))
+plt.imshow(img, cmap='gray')
+plt.axis('off')
+plt.show()
+
+img = np.array(IQR).reshape(28, 28)
+plt.figure(figsize=(5, 5))
+plt.imshow(img, cmap='gray')
+plt.axis('off')
+plt.show()
+
+accuracies = []
+for rango in range(3,784, 3):
+    
+    atributos = IQR.iloc[rango - 3: rango].index.tolist()
+    clasificador = KNeighborsClassifier(n_neighbors= 5)
+    clasificador.fit(X_train[atributos], y_train)
+    
+    y_pred = clasificador.predict(X_test[atributos])
+    acc = accuracy_score(y_test, y_pred)
+    accuracies.append((acc, list(atributos)))
+    print(f"\nConjunto {rango - 3} - {rango} - Atributos: {atributos}")
+    print(f"Accuracy: {round(acc, 4)}")
+
+
+punto_maximo = max(accuracies, key = lambda x: x[0])
+acurracies = [items[0] for items in accuracies]
+plt.figure(figsize=(25, 5))
+
+plt.plot(acurracies, 'bo-', linewidth=1, markersize=2)
+plt.title('Accuracy para 5 conjuntos de atributos', fontsize=13, fontweight='bold')
+plt.xlabel('Conjunto')
+plt.ylabel('Accuracy')
+plt.grid(True, alpha=0.3)

@@ -82,10 +82,10 @@ conjunto5 = desviaciones.iloc[100:103].index.tolist()
 conjunto6 = desviaciones.tail(3).index.tolist() 
 conjuntos = [conjunto1, conjunto2, conjunto3,conjunto4,conjunto5,conjunto6]
 
-nombres_cortos = ['Top 3', 'Sig 3', 'Med 1', 'Med 2', 'Med 3', 'Min 3']
+nombres_cortos = [f'Grupo {numero}' for numero in range(1,7)]
 accuracies = []
 for i, attrs in enumerate(conjuntos, 1):
-    clasificador = KNeighborsClassifier()
+    clasificador = KNeighborsClassifier(n_neighbors= 5)
     clasificador.fit(X_train[attrs], y_train)
     
     y_pred = clasificador.predict(X_test[attrs])
