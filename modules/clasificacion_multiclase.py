@@ -1,0 +1,113 @@
+#%% IMPORTS Y CONFIGURACIÓN INICIAL
+"""
+Módulos necesarios para el procesamiento de datos, visualización y modelado.
+Se importan todas las bibliotecas requeridas y se configura el entorno de
+visualización.
+"""
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import accuracy_score
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import plot_tree
+#%% FUNCIONES UTILIZADAS DURANTE EL INFORME
+def conteo_de_letters(df):
+    conteo = {}
+    for _, row in df.iterrows():
+        if row['label'] not in conteo:
+            conteo[row['label']] = 0
+        conteo[row['label']] +=1
+    return conteo
+def cargar_datos(ruta_archivo: str) -> pd.DataFrame:
+    """
+    Carga el dataset desde un archivo CSV.
+    
+    Parametros
+    ----------
+    ruta_archivo : str
+        Ruta al archivo CSV con los datos
+        
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame con los datos cargados
+    """
+    try:
+        df = pd.read_csv(ruta_archivo)
+        print("Datos cargados")
+        return df
+    except FileNotFoundError:
+        print("No se encontró el archivo")
+
+def remane_labels(df):
+    letters_upper = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z']
+    index_label = list(range(len(letters_upper)))
+    
+    rename = dict(zip(index_label,letters_upper))
+    
+    df['label'] = df['label'].replace(rename)
+    return df
+def mostrar_imagen_letra(df, indice, columna_label='label', dimension=(28, 28)):
+    """
+    Muestra una imagen de letra a partir de su índice en el DataFrame.
+    
+    Parametros
+    ----------
+    df : pd.DataFrame
+        DataFrame con los datos
+    indice : int
+        Índice de la fila a visualizar
+    columna_label : str
+        Nombre de la columna que contiene la etiqueta
+    dimension : tuple
+        Dimensiones de la imagen (alto, ancho)
+    """
+    letra = df.iloc[indice][columna_label]
+    
+    X = df.drop(columns=[columna_label])
+    
+    img = np.array(X.iloc[indice]).reshape(dimension[0], dimension[1])
+    
+    plt.figure(figsize=(5, 5))
+    plt.imshow(img, cmap='gray')
+    plt.title(f'Letra: {letra} - Índice: {indice}', fontsize=14, fontweight='bold')
+    plt.axis('off')
+    plt.show()
+    
+    return img
+
+#%% CARGA DE DATOS
+contador_figuras = 0
+DATA_PATH = '../data/letras.csv'
+df = cargar_datos(DATA_PATH)
+df =  remane_labels(df)
+#%%PUNTO 1
+X = df.drop(columns=['label'])
+y= df['label']
+
+X_dev, X_held_out, y_dev, y_held_out = train_test_split(X, y,test_size=0.2,stratify=y)
+
+resultado = pd.concat([y_dev,X_dev],axis=1)
+
+
+X_train, X_test, y_train, y_test = train_test_split(X_dev, y_dev,test_size=0.3,stratify=y_dev)
+
+#%% PUNTO 2
+
+
+# Entrenar árbol
+deep = 10
+model = DecisionTreeClassifier(max_depth=deep, random_state=42)
+model.fit(X_train, y_train)
+
+# Evaluación
+y_pred = model.predict(X_test)
+print("Accuracy:", accuracy_score(y_test, y_pred))
+
+
+
+plt.figure(figsize=(50,deep * 15))
+plot_tree(model, filled=True,fontsize=10,rounded=True)
+plt.show()
