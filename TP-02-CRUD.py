@@ -360,6 +360,11 @@ def rango_intercuartil(df):
 
 IQRO = rango_intercuartil(df_letra_O)
 IQRL = rango_intercuartil(df_letra_L)
+
+media_O = df_letra_O.mean()
+media_L = df_letra_L.mean()
+diferencia = abs(media_O - media_L)
+
 #IQR = ((IQRL-IQRO)**2)**(1/2)
 #IQR_con_mayor = IQR.sort_values(ascending = False)
 
@@ -369,26 +374,28 @@ plt.imshow(img, cmap='gray')
 plt.axis('off')
 plt.show()
 
-img = np.array(IQRL).reshape(28, 28)
+img = np.array(media_O).reshape(28, 28)
 plt.figure(figsize=(5, 5))
 plt.imshow(img, cmap='gray')
 plt.axis('off')
 plt.show()
 
 
-IQR = IQRL-IQRO
+IQR = abs(IQRL-IQRO)
+
+img = np.array(IQR).reshape(28, 28)
+plt.figure(figsize=(5, 5))
+plt.imshow(img, cmap='gray')
+plt.axis('off')
+plt.show()
+
 IQR_con_mayor = IQR.sort_values(ascending = False)
-
-img = np.array(IQR_con_mayor).reshape(28, 28)
-plt.figure(figsize=(5, 5))
-plt.imshow(img, cmap='gray')
-plt.axis('off')
-plt.show()
-
 accuracies = []
-for rango in range(3,784, 3):
+diferencia = diferencia.sort_values(ascending = True)
+
+for rango in range(1,784, 1):
     
-    atributos = IQR_con_mayor.iloc[rango - 3: rango].index.tolist()
+    atributos = diferencia.iloc[rango- 1: rango].index.tolist()
     clasificador = KNeighborsClassifier(n_neighbors= 5)
     clasificador.fit(X_train[atributos], y_train)
     
