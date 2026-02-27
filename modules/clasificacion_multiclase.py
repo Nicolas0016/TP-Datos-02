@@ -92,20 +92,33 @@ X_train, X_test, y_train, y_test = train_test_split(X_dev, y_dev,test_size=0.3,s
 
 #resultado = pd.concat([y_dev,X_dev],axis=1)
 #%% PUNTO 2
+scores = []
 
+print("--------- Acuracies (por profundidad) ---------")
+for profundidad in range(1,21):
+    # Entrenamiento
+    model = DecisionTreeClassifier(max_depth=profundidad, random_state=42)
+    model.fit(X_train, y_train)
 
-# Entrenar árbol
-deep = 5
-model = DecisionTreeClassifier(max_depth=deep, random_state=42)
-model.fit(X_train, y_train)
+    # Evaluación
+    y_pred = model.predict(X_held_out)#cambio X_test a x_held_out
+    accuracy = accuracy_score(y_held_out, y_pred)#cambio y_test a y_held_out
+    scores.append(accuracy)
 
-# Evaluación
-y_pred = model.predict(X_held_out)#cambio X_test a x_held_out
-print("Accuracy:", accuracy_score(y_held_out, y_pred))#cambio y_test a y_held_out
+    print(f"{profundidad}: {accuracy}")
 
+#Grafico del accuracy por profundidad
+plt.plot(range(1,21), scores, marker='o', linestyle='-',color = 'Blue')
+plt.title('Accuracy del arbol por profundidad')
+plt.xlabel('Profundidad')
+plt.ylabel('Accuracy')
+plt.grid(True)
+plt.show()
 
-
-plt.figure(figsize=(50,deep * 15))
+#grafico del arbol
+"""
+plt.figure(figsize=(50,profundidad * 15))
 plot_tree(model, filled=True,fontsize=10,rounded=True)
 plt.show()
+"""
 # %%
