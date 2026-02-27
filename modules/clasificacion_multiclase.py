@@ -136,4 +136,3 @@ grid.fit(X_train,y_train)
 #de grid.cv_results_ seguro se puede sacar un grafico
 #no se si cumplimos lo de mostrar la configuracion de hiperparametros
 print(f"Modelo ganador: {grid.best_estimator_} \nAccuracy: {round(grid.best_score_,2)} \nProfundidad {grid.best_params_['max_depth']}")
-# %%
