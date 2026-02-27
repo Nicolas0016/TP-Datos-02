@@ -51,7 +51,7 @@ df_letras_OL = pd.concat([df_letra_O,df_letra_L])
 
 print("Muestras de O:",len(df_letra_O))
 print("Muestras de L:",len(df_letra_L))
-print("Total de muestras:",len(df_letra_O)+len(df_letra_L))
+print("Total de muestras:",len(df_letras_OL))
 #%% 2.b: SEPARAR TRAIN Y TEST
 # ===============================================================================
 X = df_letras_OL.drop(columns=['label'])

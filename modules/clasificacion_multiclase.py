@@ -88,26 +88,24 @@ X = df.drop(columns=['label'])
 y= df['label']
 
 X_dev, X_held_out, y_dev, y_held_out = train_test_split(X, y,test_size=0.2,stratify=y)
-
-resultado = pd.concat([y_dev,X_dev],axis=1)
-
-
 X_train, X_test, y_train, y_test = train_test_split(X_dev, y_dev,test_size=0.3,stratify=y_dev)
 
+#resultado = pd.concat([y_dev,X_dev],axis=1)
 #%% PUNTO 2
 
 
 # Entrenar árbol
-deep = 10
+deep = 5
 model = DecisionTreeClassifier(max_depth=deep, random_state=42)
 model.fit(X_train, y_train)
 
 # Evaluación
-y_pred = model.predict(X_test)
-print("Accuracy:", accuracy_score(y_test, y_pred))
+y_pred = model.predict(X_held_out)#cambio X_test a x_held_out
+print("Accuracy:", accuracy_score(y_held_out, y_pred))#cambio y_test a y_held_out
 
 
 
 plt.figure(figsize=(50,deep * 15))
 plot_tree(model, filled=True,fontsize=10,rounded=True)
 plt.show()
+# %%
