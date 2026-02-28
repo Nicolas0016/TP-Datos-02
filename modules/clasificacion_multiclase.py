@@ -7,11 +7,14 @@ visualización.
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
 from sklearn.model_selection import train_test_split,GridSearchCV
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score
+from sklearn.metrics import confusion_matrix
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import plot_tree
+
 #%% FUNCIONES UTILIZADAS DURANTE EL INFORME
 def conteo_de_letters(df):
     conteo = {}
@@ -122,7 +125,7 @@ plot_tree(model, filled=True,fontsize=10,rounded=True)
 plt.show()
 """
 # %% PUNTO 3
-X_train, X_test, y_train, y_test = train_test_split(X, y,test_size=0.2,stratify=y) #capaz que hay que usar held out
+#X_train, X_test, y_train, y_test = train_test_split(X, y,test_size=0.2,stratify=y) #capaz que hay que usar held out
 
 model = DecisionTreeClassifier(random_state=42)
 param_grid = {'max_depth':range(1,10)}#nos piden usar profundidades de 1 a 10
@@ -130,9 +133,32 @@ param_grid = {'max_depth':range(1,10)}#nos piden usar profundidades de 1 a 10
 grid = GridSearchCV(estimator=model,param_grid=param_grid,cv=5,scoring='accuracy',n_jobs=-1) #si se les traba todo pongan el n_jobs en 1 (-1 es que usa todos los nucleos del cpu, 1 es uno solo)
 #cv = 5 es que se van dividir en 5 grupos
 
-grid.fit(X_train,y_train)
+grid.fit(X_dev,y_dev)
+
+mejor_modelo = grid.best_estimator_
+mejor_profundidad = grid.best_params_['max_depth']
 
 #print(grid.cv_results_)
 #de grid.cv_results_ seguro se puede sacar un grafico
 #no se si cumplimos lo de mostrar la configuracion de hiperparametros
-print(f"Modelo ganador: {grid.best_estimator_} \nAccuracy: {round(grid.best_score_,2)} \nProfundidad {grid.best_params_['max_depth']}")
+print(f"Modelo ganador: {mejor_modelo} \nAccuracy: {round(grid.best_score_,2)} \nProfundidad {mejor_profundidad}")
+
+
+#%% PUNTO 4
+# evalúo con el mejor modelo (el del punto anterior)
+y_pred = mejor_modelo.predict(X_held_out)
+accuracy = round(accuracy_score(y_held_out, y_pred),2)
+
+matriz_confusion = pd.DataFrame(confusion_matrix(y_held_out,y_pred))
+
+plt.figure(figsize=(8,6))
+grafico = sns.heatmap(matriz_confusion,xticklabels=mejor_modelo.classes_,yticklabels=mejor_modelo.classes_,cmap="Greens") #le podemos cambiar el color con cmap, tipo "Reds" o "Blues"
+#grafico.tick_params(labeltop = True,labelbottom = False)
+plt.xlabel("Predicción")
+grafico.xaxis.set_label_position("top")
+
+plt.ylabel("Respuesta correcta")
+#plt.title("Matriz de confusión")
+
+plt.show()
+print('Accuracy: ',accuracy)
