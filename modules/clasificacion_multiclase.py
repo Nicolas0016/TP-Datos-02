@@ -110,20 +110,21 @@ for profundidad in range(1,21):
 
     print(f"{profundidad}: {accuracy}")
 
+#%%BORRARESTECOMENTARUI
 #Grafico del accuracy por profundidad
+
 plt.plot(range(1,21), scores, marker='o', linestyle='-',color = 'Blue')
 plt.title('Accuracy del arbol por profundidad')
 plt.xlabel('Profundidad')
 plt.ylabel('Accuracy')
 plt.grid(True)
-plt.show()
+plt.xticks(range(0,21,2))
+plt.figtext(0,0.03,'Figura 10')
 
-"""
-#grafico del arbol
-plt.figure(figsize=(50,profundidad * 15))
-plot_tree(model, filled=True,fontsize=10,rounded=True)
+indx_de_max = np.argmax(scores) #buscamos el indice del mayor accuracy para resaltarlo
+plt.scatter(range(1,21)[indx_de_max],scores[indx_de_max],color = 'magenta',zorder = 2)
+
 plt.show()
-"""
 # %% PUNTO 3
 
 model = DecisionTreeClassifier(random_state=42)
