@@ -119,7 +119,7 @@ plt.xlabel('Profundidad')
 plt.ylabel('Accuracy')
 plt.grid(True)
 plt.xticks(range(0,21,2))
-plt.figtext(0,0.03,'Figura 10')
+plt.figtext(0.1,0.03,'Figura 10')
 
 indx_de_max = np.argmax(scores) #buscamos el indice del mayor accuracy para resaltarlo
 plt.scatter(range(1,21)[indx_de_max],scores[indx_de_max],color = 'magenta',zorder = 2)
