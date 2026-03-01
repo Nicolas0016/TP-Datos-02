@@ -126,9 +126,20 @@ plt.show()
 # %% PUNTO 3
 
 model = DecisionTreeClassifier(random_state=42)
-param_grid = {'max_depth':range(1,11)}#nos piden usar profundidades de 1 a 10
 
-grid = GridSearchCV(estimator=model,param_grid=param_grid,cv=5,scoring='accuracy',n_jobs=-1) #si se les traba todo pongan el n_jobs en 1 (-1 es que usa todos los nucleos del cpu, 1 es uno solo)
+param_grid = {
+    'max_depth': [5, 10, 15, 20],
+    'min_samples_split': [2, 10, 20],
+    'min_samples_leaf': [1, 5, 10],
+    'criterion': ['gini', 'entropy']
+}
+grid = GridSearchCV(
+    estimator=model,
+    param_grid=param_grid,
+    cv=5,
+    scoring='accuracy',
+    n_jobs=-1
+)
 #cv = 5 es que se van dividir en 5 grupos
 
 grid.fit(X_train,y_train)
