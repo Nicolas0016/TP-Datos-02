@@ -42,8 +42,10 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score
+from sklearn.metrics import precision_score
 #%% FUNCIONES UTILIZADAS DURANTE EL INFORME
 def conteo_de_letters(df):
+    
     conteo = {}
     for _, row in df.iterrows():
         if row['label'] not in conteo:
@@ -79,6 +81,17 @@ def remane_labels(df):
     
     df['label'] = df['label'].replace(rename)
     return df
+def limpiar_ruido(df, umbral=200):
+    """Versión de una línea para filtrar ruido."""
+    df_limpio = df.copy()
+    if 'label' in df_limpio.columns:
+        df_limpio[df_limpio.columns[1:]] = df_limpio[df_limpio.columns[1:]].clip(upper=umbral)
+        df_limpio[df_limpio.columns[1:]] = df_limpio[df_limpio.columns[1:]].replace(umbral, 255)
+    else:
+        df_limpio = df_limpio.clip(upper=umbral)
+        df_limpio = df_limpio.replace(umbral, 255)
+    return df_limpio
+
 def mostrar_imagen_letra(df, indice, columna_label='label', dimension=(28, 28)):
     """
     Muestra una imagen de letra a partir de su índice en el DataFrame.
@@ -107,13 +120,62 @@ def mostrar_imagen_letra(df, indice, columna_label='label', dimension=(28, 28)):
     plt.show()
     
     return img
+def comparar_letras_superposicion(df, letra1, letra2, contador_figuras,dimension=(28, 28)):
+    idx1 = df[df['label'] == letra1].index[0]
+    idx2 = df[df['label'] == letra2].index[0]
+    
+    X = df.drop(columns=['label'])
+    
+    img1 = np.array(X.iloc[idx1]).reshape(dimension[0], dimension[1])
+    img2 = np.array(X.iloc[idx2]).reshape(dimension[0], dimension[1])
+    
+    img_superpuesta = np.ones((dimension[0], dimension[1], 3))  # Fondo blanco (1,1,1)
+    
+    mask_ambas = ((img1 < 200) & (img2 < 200)) | ((img1==255) & (img2==255))
+    img_superpuesta[mask_ambas] = [0, 1, 0]  # Verde
+    
+    # Visualizar
+    fig, axes = plt.subplots(1, 3, figsize=(16, 4))
+    
+    axes[0].imshow(img1, cmap='gray')
+    axes[0].set_title(f'Letra {letra1}', fontsize=14, fontweight='bold')
+    axes[0].axis('off')
+    
+    axes[1].imshow(img2, cmap='gray')
+    axes[1].set_title(f'Letra {letra2}', fontsize=14, fontweight='bold')
+    axes[1].axis('off')
+    
+    axes[2].imshow(img_superpuesta)
+    axes[2].set_title('Superposición', fontsize=14, fontweight='bold')
+    axes[2].axis('off')
+    
+    plt.suptitle(f'Comparación {letra1} vs {letra2} - Superposición', 
+                 fontsize=16, fontweight='bold')
+    plt.tight_layout()
+    plt.figtext(0.5, 0.01, f"FIGURA {contador_figuras}: Comparación {letra1} vs {letra2}", 
+                ha="center", fontsize=10, style='italic')
+    plt.show()
+    
+    return img_superpuesta
+def rango_intercuartil(df):
+    Q1 = df.quantile(0.25)
+    Q3 = df.quantile(0.75)
 
+    # Calcular el Rango Intercuartil (IQR)
+    IQR = Q3 - Q1
+    return IQR
+def mostrar_letra(letra, title):
+    img = np.array(letra).reshape(28, 28)
+    plt.imshow(img, cmap='gray')
+    plt.title(title, fontweight='bold')
+    plt.axis('off')
+    plt.show()
 #%% CARGA DE DATOS
 contador_figuras = 0
 DATA_PATH = './data/letras.csv'
 df = cargar_datos(DATA_PATH)
 df =  remane_labels(df)
-
+df = limpiar_ruido(df)
 #%% ANÁLISIS EXPLORATORIO
 
 # =============================================================================
@@ -165,18 +227,23 @@ print(f"Ratio max/min: {ratio}")
 #### Visualización
 # =============================================================================
 contador_figuras += 1
-plt.figure(figsize=(15,6))
+plt.figure(figsize=(9,6))
 letras = conteo_letras.keys()
 cantidades = [conteo_letras[letra] for letra in letras]
-
-barras = plt.bar(letras, cantidades)
-plt.title("Distribución de letras en el df")
-plt.xlabel("letra")
-plt.ylabel("cantidad de muestras")
-plt.figtext(0.5, 0.01, f"FIGURA {contador_figuras}: Distribución de letras en el dataset", 
+promedio = np.mean(cantidades)
+desvio = np.std(cantidades)
+# Histograma
+plt.subplot(1, 2, 2)
+n, bins, patches = plt.hist(cantidades, bins=10, edgecolor='black', alpha=0.7, color='skyblue')
+plt.title('Histograma: Distribución de Frecuencias', fontweight='bold')
+plt.xlabel('Cantidad de Muestras')
+plt.ylabel('Cantidad de Letras')
+plt.xticks([1015, 1016, 1017])
+plt.yticks([0,9,18,27])
+plt.grid(True, alpha=0.3, axis='y')
+plt.legend()
+plt.figtext(0.705, -0.05, f"FIGURA {contador_figuras}", 
             ha="center", fontsize=10, style='italic')
-plt.show()
-
 # =============================================================================
 #### VISUALIZAR TODAS LAS LETRAS (para comparar similitudes)
 # =============================================================================
@@ -216,47 +283,10 @@ def visualizar_todas_letras_grilla(df,contador_figuras, dimension=(28, 28), tipo
     plt.show()
 contador_figuras += 1
 visualizar_todas_letras_grilla(df,contador_figuras)
-
+visualizar_todas_letras_grilla(df,contador_figuras, tipografia=8)
 # =============================================================================
 #### FUNCIÓN PARA COMPARAR PARES DE LETRAS
 # =============================================================================
-def comparar_letras_superposicion(df, letra1, letra2, contador_figuras,dimension=(28, 28)):
-    idx1 = df[df['label'] == letra1].index[0]
-    idx2 = df[df['label'] == letra2].index[0]
-    
-    X = df.drop(columns=['label'])
-    
-    img1 = np.array(X.iloc[idx1]).reshape(dimension[0], dimension[1])
-    img2 = np.array(X.iloc[idx2]).reshape(dimension[0], dimension[1])
-    
-    img_superpuesta = np.ones((dimension[0], dimension[1], 3))  # Fondo blanco (1,1,1)
-    
-    mask_ambas = (img1 < 200) & (img2 < 200)
-    img_superpuesta[mask_ambas] = [0, 1, 0]  # Verde
-    
-    # Visualizar
-    fig, axes = plt.subplots(1, 3, figsize=(16, 4))
-    
-    axes[0].imshow(img1, cmap='gray')
-    axes[0].set_title(f'Letra {letra1}', fontsize=14, fontweight='bold')
-    axes[0].axis('off')
-    
-    axes[1].imshow(img2, cmap='gray')
-    axes[1].set_title(f'Letra {letra2}', fontsize=14, fontweight='bold')
-    axes[1].axis('off')
-    
-    axes[2].imshow(img_superpuesta)
-    axes[2].set_title('Superposición', fontsize=14, fontweight='bold')
-    axes[2].axis('off')
-    
-    plt.suptitle(f'Comparación {letra1} vs {letra2} - Superposición', 
-                 fontsize=16, fontweight='bold')
-    plt.tight_layout()
-    plt.figtext(0.5, 0.01, f"FIGURA {contador_figuras}: Comparación {letra1} vs {letra2}", 
-                ha="center", fontsize=10, style='italic')
-    plt.show()
-    
-    return img_superpuesta
 
 contador_figuras += 1
 comparar_letras_superposicion(df, 'O', 'Q', contador_figuras)
@@ -274,7 +304,7 @@ comparar_letras_superposicion(df, 'I', 'L', contador_figuras)
 #### FUNCIÓN PARA VISUALIZAR MÚLTIPLES MUESTRAS DE UNA LETRA
 # =============================================================================
 
-def visualizar_tipografia_letra(df, letra, contador_figuras,n_muestras=49, dimension=(28, 28)):
+def visualizar_tipografia_letra(df, letra, contador_figuras,n_muestras=9, dimension=(28, 28)):
     """
     Muestra múltiples muestras de una misma letra para ver variabilidad.
     """
@@ -305,6 +335,7 @@ def visualizar_tipografia_letra(df, letra, contador_figuras,n_muestras=49, dimen
     plt.show()
 contador_figuras += 1
 visualizar_tipografia_letra(df, 'O', contador_figuras)
+
 #%% CLASIFICACIÓN BINARIA
 
 # =============================================================================
@@ -318,19 +349,21 @@ df_letras_OL = pd.concat([df_letra_O,df_letra_L])
 print("Muestras de O:",len(df_letra_O))
 print("Muestras de L:",len(df_letra_L))
 print("Total de muestras:",len(df_letra_O)+len(df_letra_L))
-# =============================================================================
-# 
-# # Falta: determinar si está balanceado con respecto a las 
-# # dos clases a predecir (si la imagen es de la letra O o de la letra L).
-# 
-# =============================================================================
+
+print("\n--- ANÁLISIS DE BALANCE ---")
+print(f"Proporción O: {len(df_letra_O)/len(df_letras_OL)}")
+print(f"Proporción L: {len(df_letra_L)/len(df_letras_OL)}")
+if abs(len(df_letra_O) - len(df_letra_L)) / min(len(df_letra_O), len(df_letra_L)) < 0.1:
+    print("El dataset está balanceado")
+else:
+    print("El dataset no está perfectamente balanceado")
+
 
 # =============================================================================
 #### Separar los datos en conjuntos de train y test
 # =============================================================================
 
 X = df_letras_OL
-
 y = df_letras_OL['label']
 
 X_train, X_test, y_train, y_test = train_test_split(X, y,test_size=0.3,stratify=y)
@@ -342,76 +375,163 @@ print(y_train.value_counts())
 print("\nDistribución en test:")
 print(y_test.value_counts())
 
+df_letra_O_train = X_train[y_train == 'O'].drop(columns = ['label'])
+df_letra_L_train =  X_train[y_train == 'L'].drop(columns = ['label'])
+
+
+# Mediana de clase de letra por pixel.
+media_O = df_letra_O_train.mean()
+media_L = df_letra_L_train.mean()
+diferencia_medias = abs(media_O - media_L)
+
+# Variacion de pixeles por clase de letra
+IQR_O = rango_intercuartil(df_letra_O_train)
+IQR_L = rango_intercuartil(df_letra_L_train)
+
+diferencia_IQR = abs(IQR_O - IQR_L)
+
+
+# Visualizar las diferencias (mediana y rango interquartil)
+mostrar_letra(media_O, 'Media de O') 
+mostrar_letra(IQR_O, 'Rango Intercuartílico de O') 
+
+mostrar_letra(media_L, 'Media de L') 
+mostrar_letra(IQR_L, 'Rango Intercuartílico de L')
+
+mostrar_letra(diferencia_medias, 'Diferencia de Medias\n(O vs L)')
+mostrar_letra(diferencia_IQR, 'Diferencia de IQR\n(O vs L)')
+
 # =============================================================================
-#### modelo de KNN sobre los datos de entrenamiento utilizando una cantidad 
-### reducida de atributos(3)
+# Comparación de criterios de selección (IQR vs Diferencia de Medias)
 # =============================================================================
-#desviaciones = X_train.std().sort_values(ascending = False)
+atributos_por_IQR = diferencia_IQR.sort_values(ascending=False).index.tolist()
+atributos_por_media = diferencia_medias.sort_values(ascending=False).index.tolist()
 
-df_letra_O = X_train[X_train['label']=='O'].drop(columns=['label'])
-df_letra_L = X_train[X_train['label']=='L'].drop(columns=['label'])
-def rango_intercuartil(df):
-    Q1 = df.quantile(0.25)
-    Q3 = df.quantile(0.75)
+tamanos_atributos = [3, 5, 10, 20, 50, 100, 200, 400, 784]
+resultados_IQR = []
+resultados_media = []
 
-    # Calcular el Rango Intercuartil (IQR)
-    IQR = Q3 - Q1
-    return IQR
-
-IQRO = rango_intercuartil(df_letra_O)
-IQRL = rango_intercuartil(df_letra_L)
-
-media_O = df_letra_O.mean()
-media_L = df_letra_L.mean()
-diferencia = abs(media_O - media_L)
-
-#IQR = ((IQRL-IQRO)**2)**(1/2)
-#IQR_con_mayor = IQR.sort_values(ascending = False)
-
-img = np.array(IQRO).reshape(28, 28)
-plt.figure(figsize=(5, 5))
-plt.imshow(img, cmap='gray')
-plt.axis('off')
-plt.show()
-
-img = np.array(media_O).reshape(28, 28)
-plt.figure(figsize=(5, 5))
-plt.imshow(img, cmap='gray')
-plt.axis('off')
-plt.show()
-
-
-IQR = abs(IQRL-IQRO)
-
-img = np.array(IQR).reshape(28, 28)
-plt.figure(figsize=(5, 5))
-plt.imshow(img, cmap='gray')
-plt.axis('off')
-plt.show()
-
-IQR_con_mayor = IQR.sort_values(ascending = False)
-accuracies = []
-diferencia = diferencia.sort_values(ascending = True)
-
-for rango in range(1,784, 1):
+for n_atributos in tamanos_atributos:
+    # Entrenamiento por IQR
+    atributos_IQR = atributos_por_IQR[:n_atributos]
+    knn_IQR = KNeighborsClassifier(n_neighbors=5)
+    knn_IQR.fit(X_train[atributos_IQR], y_train)
+    y_pred_IQR = knn_IQR.predict(X_test[atributos_IQR])
+    acc_IQR = accuracy_score(y_test, y_pred_IQR)
+    resultados_IQR.append(acc_IQR)
     
-    atributos = diferencia.iloc[rango- 1: rango].index.tolist()
-    clasificador = KNeighborsClassifier(n_neighbors= 5)
-    clasificador.fit(X_train[atributos], y_train)
+    # Entrenamiento por Mediana
+    atributos_media = atributos_por_media[:n_atributos]
+    knn_media = KNeighborsClassifier(n_neighbors=5)
+    knn_media.fit(X_train[atributos_media], y_train)
+    y_pred_media = knn_media.predict(X_test[atributos_media])
+    acc_media = accuracy_score(y_test, y_pred_media)
+    resultados_media.append(acc_media)
     
-    y_pred = clasificador.predict(X_test[atributos])
-    acc = accuracy_score(y_test, y_pred)
-    accuracies.append((acc, list(atributos)))
-    print(f"\nConjunto {rango - 3} - {rango} - Atributos: {atributos}")
-    print(f"Accuracy: {round(acc, 4)}")
+# =============================================================================
+## Comparación de criterios
+# =============================================================================
+contador_figuras += 1
+plt.figure(figsize=(12, 8))
+
+plt.plot(tamanos_atributos, resultados_IQR, 'bo-', linewidth=2, markersize=8, 
+         label='Selección por IQR', markeredgecolor='black', markeredgewidth=1)
+plt.plot(tamanos_atributos, resultados_media, 'rs-', linewidth=2, markersize=8, 
+         label='Selección por Diferencia de Medias', markeredgecolor='black', markeredgewidth=1)
+
+# =============================================================================
+## marcar el mejor punto de cada curva
+# =============================================================================
+mejor_IQR_idx = np.argmax(resultados_IQR)
+mejor_media_idx = np.argmax(resultados_media)
+plt.plot(tamanos_atributos[mejor_IQR_idx], resultados_IQR[mejor_IQR_idx], 'o', 
+         markersize=15, markeredgecolor='gold', markeredgewidth=3, markerfacecolor='blue')
+plt.plot(tamanos_atributos[mejor_media_idx], resultados_media[mejor_media_idx], 's', 
+         markersize=15, markeredgecolor='gold', markeredgewidth=3, markerfacecolor='red')
+plt.legend()
 
 
-punto_maximo = max(accuracies, key = lambda x: x[0])
-acurracies = [items[0] for items in accuracies]
-plt.figure(figsize=(25, 5))
+# CUADRADO AMARILLO CON INFORMACIÓN
+plt.annotate(f'{round(resultados_IQR[mejor_IQR_idx], 3)}', 
+             (tamanos_atributos[mejor_IQR_idx], resultados_IQR[mejor_IQR_idx]),
+             xytext=(10, 10), textcoords='offset points', fontsize=10,
+             bbox=dict(boxstyle='round,pad=0.3', facecolor='yellow', alpha=0.7))
 
-plt.plot(acurracies, 'bo-', linewidth=1, markersize=2)
-plt.title('Accuracy para 5 conjuntos de atributos', fontsize=13, fontweight='bold')
-plt.xlabel('Conjunto')
-plt.ylabel('Accuracy')
-plt.grid(True, alpha=0.3)
+plt.annotate(f'{round(resultados_media[mejor_media_idx],3)}', 
+             (tamanos_atributos[mejor_media_idx], resultados_media[mejor_media_idx]),
+             xytext=(10, -20), textcoords='offset points', fontsize=10,
+             bbox=dict(boxstyle='round,pad=0.3', facecolor='yellow', alpha=0.7))
+
+plt.xlabel('Cantidad de Atributos', fontsize=12)
+plt.ylabel('Accuracy', fontsize=12)
+plt.title('Comparación de Criterios de Selección de Atributos\nIQR vs Diferencia de Medias (k=5)', 
+          fontsize=14, fontweight='bold')
+plt.grid(True, alpha=0.3, linestyle='--')
+plt.legend(loc='lower right', fontsize=12)
+plt.xscale('log')
+plt.xlim(2, 1000)
+plt.ylim(0.85, 1.005)
+plt.xticks(tamanos_atributos)
+plt.tight_layout()
+plt.figtext(0.5, 0.01, f"FIGURA {contador_figuras}: Comparación IQR vs Diferencia de Medias", 
+            ha="center", fontsize=10, style='italic')
+plt.show()
+
+# =============================================================================
+## Modelos de KNN utilizando distintos atributos y distintos valores de k (vecinos).
+# =============================================================================
+contador_figuras += 1
+
+# Crear matriz de resultados para diferentes k y cantidades de atributos
+valores_k = [1, 3, 5, 7, 9, 11, 15]
+tamanos_atributos_exp = [3, 5, 10, 20, 50, 100, 200, 400, 784]
+resultados_completos = []
+
+print("\n--- Variando k y cantidad de atributos... ---")
+for n_atributos in tamanos_atributos_exp:
+    atributos_seleccionados = atributos_por_IQR[:n_atributos]
+    for k in valores_k:
+        knn = KNeighborsClassifier(n_neighbors=k)
+        knn.fit(X_train[atributos_seleccionados], y_train)
+        y_pred = knn.predict(X_test[atributos_seleccionados])
+        acc = accuracy_score(y_test, y_pred)
+        resultados_completos.append({
+            'n_atributos': n_atributos,
+            'k': k,
+            'accuracy': acc
+        })
+print(":D")
+df_resultados = pd.DataFrame(resultados_completos)
+# Heatmap
+plt.figure(figsize=(14, 8))
+heatmap_data = df_resultados.pivot_table(
+    values='accuracy', 
+    index='n_atributos', 
+    columns='k'
+)
+
+plt.imshow(heatmap_data, aspect='auto', cmap='Oranges', interpolation='nearest')
+plt.colorbar(label='Accuracy', shrink=0.8)
+
+# Configurar ejes
+plt.xticks(range(len(valores_k)), valores_k, fontsize=11)
+plt.yticks(range(len(tamanos_atributos_exp)), tamanos_atributos_exp, fontsize=11)
+
+plt.xlabel('Valor de k (vecinos)', fontsize=12)
+plt.ylabel('Cantidad de Atributos', fontsize=12)
+plt.title('Heatmap de Accuracy: KNN con diferentes k y cantidad de atributos\n(Selección por IQR)', 
+          fontsize=14, fontweight='bold')
+
+# Agregar valores en las celdas
+for i in range(len(tamanos_atributos_exp)):
+    for j in range(len(valores_k)):
+        valor = heatmap_data.iloc[i, j]
+        color_texto = 'white' if valor > 0.85 else 'black'
+        plt.text(j, i, f'{round(valor,3)}', 
+                ha='center', va='center', color=color_texto, fontsize=9, fontweight='bold')
+
+plt.tight_layout()
+plt.figtext(0.5, 0.01, f"FIGURA {contador_figuras}: Heatmap de resultados KNN", 
+            ha="center", fontsize=10, style='italic')
+plt.show()
+

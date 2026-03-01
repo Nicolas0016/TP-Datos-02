@@ -153,3 +153,207 @@ plt.ylabel('Accuracy')
 plt.grid(True, alpha=0.3)
 plt.show()
 #%%
+# =============================================================================
+#### modelo de KNN sobre los datos de entrenamiento utilizando una cantidad 
+### reducida de atributos(3)
+# =============================================================================
+#desviaciones = X_train.std().sort_values(ascending = False)
+
+df_letra_O = X_train[X_train['label']=='O'].drop(columns=['label'])
+df_letra_L = X_train[X_train['label']=='L'].drop(columns=['label'])
+def rango_intercuartil(df):
+    Q1 = df.quantile(0.25)
+    Q3 = df.quantile(0.75)
+
+    # Calcular el Rango Intercuartil (IQR)
+    IQR = Q3 - Q1
+    return IQR
+
+IQRO = rango_intercuartil(df_letra_O)
+IQRL = rango_intercuartil(df_letra_L)
+
+media_O = df_letra_O.mean()
+media_L = df_letra_L.mean()
+diferencia = abs(media_O - media_L)
+
+#IQR = ((IQRL-IQRO)**2)**(1/2)
+#IQR_con_mayor = IQR.sort_values(ascending = False)
+
+img = np.array(IQRO).reshape(28, 28)
+plt.figure(figsize=(5, 5))
+plt.imshow(img, cmap='gray')
+plt.axis('off')
+plt.show()
+
+img = np.array(media_O).reshape(28, 28)
+plt.figure(figsize=(5, 5))
+plt.imshow(img, cmap='gray')
+plt.axis('off')
+plt.show()
+
+
+img = np.array(media_L).reshape(28, 28)
+plt.figure(figsize=(5, 5))
+plt.imshow(img, cmap='gray')
+plt.axis('off')
+plt.show()
+
+
+img = np.array(IQRL).reshape(28, 28)
+plt.figure(figsize=(5, 5))
+plt.imshow(img, cmap='gray')
+plt.axis('off')
+plt.show()
+
+IQR = abs(IQRL-IQRO)
+
+img = np.array(IQR).reshape(28, 28)
+plt.figure(figsize=(5, 5))
+plt.imshow(img, cmap='gray')
+plt.axis('off')
+plt.show()
+
+
+img = np.array(diferencia).reshape(28, 28)
+plt.figure(figsize=(5, 5))
+plt.imshow(img, cmap='gray')
+plt.axis('off')
+plt.show()
+
+IQR_con_mayor = IQR.sort_values(ascending = False)
+accuracies = []
+diferencia = diferencia.sort_values(ascending = False)
+exactitudes = []
+for rango in range(3,784, 3):
+    
+    atributos = IQR_con_mayor.iloc[rango- 3: rango].index.tolist()
+    clasificador = KNeighborsClassifier(n_neighbors= 5)
+    clasificador.fit(X_train[atributos], y_train)
+    
+    y_pred = clasificador.predict(X_test[atributos])
+    acc = accuracy_score(y_test, y_pred)
+    accuracies.append((acc, list(atributos)))
+    #exactitud = precision_score(y_test, y_pred)
+   # exactitudes.append((exactitud, list(atributos)))
+    
+    #print(f"Exactitud del modelo: {exactitud:.2f}")
+    print(f"\nConjunto {rango - 3} - {rango} - Atributos: {atributos}")
+    print(f"Accuracy: {round(acc, 4)}")
+
+
+punto_maximo = max(accuracies, key = lambda x: x[0])
+acurracies = [items[0] for items in accuracies]
+exact = [items[0] for items in exactitudes] 
+plt.figure(figsize=(25, 5))
+
+plt.plot(acurracies, 'bo-', linewidth=1, markersize=2)
+plt.title('Accuracy para 5 conjuntos de atributos', fontsize=13, fontweight='bold')
+plt.xlabel('Conjunto')
+plt.ylabel('Accuracy')
+plt.grid(True, alpha=0.3)
+plt.figure(figsize=(25, 5))
+
+plt.plot(exact, 'bo-', linewidth=1, markersize=2)
+plt.title('Accuracy para 5 conjuntos de atributos', fontsize=13, fontweight='bold')
+plt.xlabel('Conjunto')
+plt.ylabel('Accuracy')
+plt.grid(True, alpha=0.3)
+
+
+#%%
+valores_k = [1, 5,9, 11, 15]
+tamanos_atributos = [3, 10, 50, 100, 200, 400, 784]
+resultados = []
+for n_atributos in tamanos_atributos:
+    atributos_seleccionados = IQR_con_mayor[:n_atributos].index.tolist()
+    
+    for k in valores_k:
+        # Entrenar modelo
+        knn = KNeighborsClassifier(n_neighbors=k)
+        knn.fit(X_train[atributos_seleccionados], y_train)
+        
+        # Evaluar
+        y_pred = knn.predict(X_test[atributos_seleccionados])
+        accuracy = accuracy_score(y_test, y_pred)
+        
+        resultados.append({
+            'n_atributos': n_atributos,
+            'k': k,
+            'accuracy': accuracy
+        })
+        
+        print(f"Atributos: {n_atributos:3d} | k: {k:2d} | Accuracy: {accuracy:.4f}")
+
+df_resultados = pd.DataFrame(resultados)
+#%%
+contador_figuras += 1
+
+# Crear figura correctamente
+fig, ax = plt.subplots(figsize=(10, 9))
+
+# Graficar cada curva de k
+for k in valores_k:
+    # Filtrar datos para este k
+    df_k = df_resultados[df_resultados['k'] == k]
+    df_k = df_k.sort_values('n_atributos')
+    
+    ax.plot(df_k['n_atributos'], df_k['accuracy'], 
+            'o-', label=f'k={k}', markersize=4, linewidth=1.5)
+
+ax.set_xlabel('Cantidad de Atributos', fontsize=12)
+ax.set_ylabel('Accuracy', fontsize=12)
+ax.set_title('Comparación de Modelos KNN: Diferentes Atributos y Diferentes k', 
+             fontsize=14, fontweight='bold')
+ax.grid(True, alpha=0.3)
+ax.legend(loc='best', fontsize=10)
+ax.set_xscale('log')
+plt.tight_layout()
+plt.figtext(0.5, 0, f"FIGURA {contador_figuras}: Comparación de modelos KNN", 
+            ha="center", fontsize=10, style='italic')
+plt.show()
+#%%
+contador_figuras += 1
+
+# Crear matriz para heatmap
+heatmap_data = df_resultados.pivot_table(
+    values='accuracy', 
+    index='n_atributos', 
+    columns='k'
+)
+
+plt.figure(figsize=(12, 8))
+plt.imshow(heatmap_data, cmap='viridis', aspect='auto', interpolation='nearest')
+plt.colorbar(label='Accuracy')
+# Configurar ejes
+plt.xticks(range(len(valores_k)), valores_k)
+plt.yticks(range(len(tamanos_atributos)), tamanos_atributos)
+
+plt.xlabel('Valor de k')
+plt.ylabel('Cantidad de Atributos')
+
+# Agregar valores en las celdas
+for i in range(len(tamanos_atributos)):
+    for j in range(len(valores_k)):
+        plt.text(j, i, f'{heatmap_data.iloc[i, j]:.3f}', 
+                ha='center', va='center', color='white', fontsize=9)
+
+plt.tight_layout()
+plt.show()
+#%%
+mejor_modelo = df_resultados.loc[df_resultados['accuracy'].idxmax()]
+contador_figuras += 1
+k_optimo_global = mejor_modelo['k']
+plt.figure(figsize=(12, 6))
+df_filtrado = df_resultados.sort_values('n_atributos')
+plt.plot(df_filtrado['n_atributos'], df_filtrado['accuracy'], linewidth=2, markersize=6)
+
+plt.xlabel('Cantidad de Atributos')
+plt.ylabel('Accuracy')
+plt.title(f'Comparación de Criterios de Selección (k={k_optimo_global})', fontweight='bold')
+plt.grid(True, alpha=0.3)
+plt.legend()
+plt.xscale('log')
+plt.tight_layout()
+plt.figtext(0.5, 0.01, f"FIGURA {contador_figuras}: Comparación de criterios con k={k_optimo_global}", 
+            ha="center", fontsize=10, style='italic')
+plt.show()

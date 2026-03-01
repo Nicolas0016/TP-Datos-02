@@ -1,4 +1,4 @@
-#%% IMPORTS Y CONFIGURACIÓN INICIAL
+    #%% IMPORTS Y CONFIGURACIÓN INICIAL
 """
 Módulos necesarios para el procesamiento de datos, visualización y modelado.
 Se importan todas las bibliotecas requeridas y se configura el entorno de
@@ -118,12 +118,7 @@ plt.ylabel('Accuracy')
 plt.grid(True)
 plt.show()
 
-"""
-#grafico del arbol
-plt.figure(figsize=(50,profundidad * 15))
-plot_tree(model, filled=True,fontsize=10,rounded=True)
-plt.show()
-"""
+
 # %% PUNTO 3
 #X_train, X_test, y_train, y_test = train_test_split(X, y,test_size=0.2,stratify=y) #capaz que hay que usar held out
 
@@ -142,7 +137,11 @@ mejor_profundidad = grid.best_params_['max_depth']
 #de grid.cv_results_ seguro se puede sacar un grafico
 #no se si cumplimos lo de mostrar la configuracion de hiperparametros
 print(f"Modelo ganador: {mejor_modelo} \nAccuracy: {round(grid.best_score_,2)} \nProfundidad {mejor_profundidad}")
-
+#grafico del arbol
+plt.figure(figsize=(20,10))
+plot_tree(mejor_modelo, filled=True, fontsize=10, rounded=True, 
+          feature_names=X.columns.tolist(), class_names=mejor_modelo.classes_)
+plt.show()
 
 #%% PUNTO 4
 # evalúo con el mejor modelo (el del punto anterior)
