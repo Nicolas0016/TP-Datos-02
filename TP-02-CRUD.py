@@ -178,6 +178,29 @@ contador_figuras = 0
 DATA_PATH = './data/letras.csv'
 df = cargar_datos(DATA_PATH)
 df =  remane_labels(df)
+
+#%% MÉTRICAS PARA VER LA CALIDAD DE DATOS
+
+pixeles = df.drop(columns=['label'])
+umbral = 200
+pixeles_totales = 784
+
+# DF booleano que indica True si es pixel es > 200
+df_fondo = pixeles > umbral
+pixeles_fondo_por_imagen = df_fondo.sum(axis=1)
+porcentaje_fondo = (pixeles_fondo_por_imagen / pixeles_totales) * 100
+
+porcentaje_global = porcentaje_fondo.mean()
+print(f"M1: Porcentaje promedio de fondo/ruido en el dataset: {porcentaje_global:.1f}%")
+
+df_gris = (pixeles >= 150) & (pixeles <= 200)
+pixeles_gris_por_imagen = df_gris.sum(axis=1)
+
+porcentaje_gris_por_imagen = (pixeles_gris_por_imagen / pixeles_totales) * 100
+porcentaje_grises = porcentaje_gris_por_imagen.mean()
+
+print(f"M2: Porcentaje promedio de píxeles en gris: {porcentaje_grises:.1f}%")
+
 df = limpiar_ruido(df)
 #%% ANÁLISIS EXPLORATORIO
 
@@ -348,7 +371,6 @@ df_letra_O = df[(df['label'] == 'O')]
 df_letra_L = df[(df['label'] == 'L')]
 
 df_letras_OL = pd.concat([df_letra_O,df_letra_L])
-
 print("Muestras de O:",len(df_letra_O))
 print("Muestras de L:",len(df_letra_L))
 print("Total de muestras:",len(df_letras_OL))
