@@ -39,10 +39,13 @@ visualización.
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.model_selection import train_test_split
+import seaborn as sns
+from sklearn.model_selection import train_test_split,GridSearchCV
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import precision_score
+from sklearn.metrics import confusion_matrix
+from sklearn.tree import DecisionTreeClassifier
 #%% FUNCIONES UTILIZADAS DURANTE EL INFORME
 def conteo_de_letters(df):
     
@@ -348,7 +351,7 @@ df_letras_OL = pd.concat([df_letra_O,df_letra_L])
 
 print("Muestras de O:",len(df_letra_O))
 print("Muestras de L:",len(df_letra_L))
-print("Total de muestras:",len(df_letra_O)+len(df_letra_L))
+print("Total de muestras:",len(df_letras_OL))
 
 print("\n--- ANÁLISIS DE BALANCE ---")
 print(f"Proporción O: {len(df_letra_O)/len(df_letras_OL)}")
@@ -535,3 +538,125 @@ plt.figtext(0.5, 0.01, f"FIGURA {contador_figuras}: Heatmap de resultados KNN",
             ha="center", fontsize=10, style='italic')
 plt.show()
 
+
+# %% CLASIFICACIÓN MULTICLASE
+
+# =============================================================================
+#### Separar el conjunto de datos en desarrollo (dev) y validación (held-out)
+# =============================================================================
+#vuelvo a definir x e y
+X = df.drop(columns=['label'])
+y= df['label']
+
+X_dev, X_held_out, y_dev, y_held_out = train_test_split(X, y,test_size=0.2,stratify=y)
+X_train, X_test, y_train, y_test = train_test_split(X_dev, y_dev,test_size=0.3,stratify=y_dev)
+
+
+# =============================================================================
+#### Ajustar un modelo de árbol. Probar con distintas profundidades.
+# =============================================================================
+scores = []
+
+print("--------- Acuracies (por profundidad) ---------")
+for profundidad in range(1,21):
+    # Entrenamiento
+    model = DecisionTreeClassifier(max_depth=profundidad, random_state=42)
+    model.fit(X_train, y_train)
+
+    # Evaluación
+    y_pred = model.predict(X_test)
+    accuracy = accuracy_score(y_test, y_pred)
+    scores.append(accuracy)
+
+    print(f"{profundidad}: {accuracy}")
+
+#Grafico del accuracy por profundidad
+plt.plot(range(1,21), scores, marker='o', linestyle='-',color = 'Blue')
+plt.title('Accuracy del arbol por profundidad')
+plt.xlabel('Profundidad')
+plt.ylabel('Accuracy')
+plt.grid(True)
+plt.xticks(range(0,21,2))
+plt.figtext(0.1,0.03,'Figura 10')
+
+indx_de_max = np.argmax(scores) #buscamos el indice del mayor accuracy para resaltarlo
+plt.scatter(range(1,21)[indx_de_max],scores[indx_de_max],color = 'magenta',zorder = 2)
+
+plt.show()
+
+
+# =============================================================================
+#### Comparar y seleccionar distintos árboles de decisión, con distintos hiperparámetos. 
+# =============================================================================
+model = DecisionTreeClassifier(random_state=42)
+param_grid = {'max_depth':range(1,11)}#nos piden usar profundidades de 1 a 10
+
+grid = GridSearchCV(estimator=model,param_grid=param_grid,cv=5,scoring='accuracy',n_jobs=-1) #si se les traba todo pongan el n_jobs en 1 (-1 es que usa todos los nucleos del cpu, 1 es uno solo)
+#cv = 5 es que se van dividir en 5 grupos
+
+grid.fit(X_train,y_train)
+
+mejor_modelo = grid.best_estimator_
+mejor_profundidad = grid.best_params_['max_depth']
+
+#GRAFICO (pongo estos pero habria que dejar solo uno o dos, o combinarlos)
+resultados = pd.DataFrame(grid.cv_results_)
+
+profundidades = resultados['param_max_depth']
+accuracy_promedio = resultados['mean_test_score']
+tiempo_promedio = resultados['mean_fit_time']
+#accracy_deriv_estandar = resultados['std_test_score']
+
+plt.figure(figsize=(8,6))
+plt.plot(profundidades, tiempo_promedio, marker='o', linestyle='-',color = 'Red')
+plt.title('Tiempo de entrenamiento por profundidad')
+plt.xlabel('Profundidad')
+plt.ylabel('Tiempo (segundos)')
+plt.grid(True)
+plt.figtext(0.1,0.04,'Figura 11')
+plt.show()
+
+plt.figure(figsize=(8,6))
+plt.plot(profundidades, accuracy_promedio, marker='o', linestyle='-',color = 'Green')
+plt.title('Accuracy por profundidad')
+plt.xlabel('Profundidad')
+plt.ylabel('Accuracy')
+plt.grid(True)
+plt.figtext(0.1,0.04,'Figura 12')
+plt.show()
+
+plt.figure(figsize=(8,6))
+plt.plot(tiempo_promedio, accuracy_promedio, marker='o', linestyle='-',color = 'Blue')
+plt.title('Accuracy por tiempo')
+plt.xlabel('Tiempo (segundos)')
+plt.ylabel('Accuracy')
+plt.grid(True)
+plt.figtext(0.1,0.04,'Figura 13')
+plt.show()
+
+print(f"Modelo ganador: {mejor_modelo} \nAccuracy: {round(grid.best_score_,2)} \nProfundidad {mejor_profundidad}")
+
+
+# =============================================================================
+#### Entrenar el modelo elegido a partir del inciso previo, ahora en todo el conjunto de desarrollo.
+# =============================================================================
+#entreno al modelo ganador con todos los datos
+mejor_modelo.fit(X_dev,y_dev)
+
+# lo evaluamos
+y_pred = mejor_modelo.predict(X_held_out)
+accuracy = round(accuracy_score(y_held_out, y_pred),2)
+
+matriz_confusion = pd.DataFrame(confusion_matrix(y_held_out,y_pred))
+
+plt.figure(figsize=(8,6))
+grafico = sns.heatmap(matriz_confusion,xticklabels=mejor_modelo.classes_,yticklabels=mejor_modelo.classes_,cmap="Greens") #le podemos cambiar el color con cmap, tipo "Reds" o "Blues"
+plt.xlabel("Predicción")
+grafico.xaxis.set_label_position("top")
+plt.ylabel("Respuesta correcta")
+
+plt.text(x = 20,y = 1,s=f"Accuracy: {accuracy}", fontsize = 11,color = 'Darkgreen')
+plt.show()
+
+
+# %%
