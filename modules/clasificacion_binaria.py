@@ -159,8 +159,8 @@ plt.show()
 # =============================================================================
 #desviaciones = X_train.std().sort_values(ascending = False)
 
-df_letra_O = X_train[X_train['label']=='O'].drop(columns=['label'])
-df_letra_L = X_train[X_train['label']=='L'].drop(columns=['label'])
+df_letra_O = X_train[y_train =='O']
+df_letra_L = X_train[y_train =='L']
 def rango_intercuartil(df):
     Q1 = df.quantile(0.25)
     Q3 = df.quantile(0.75)
@@ -253,11 +253,13 @@ plt.ylabel('Accuracy')
 plt.grid(True, alpha=0.3)
 plt.figure(figsize=(25, 5))
 
+"""
 plt.plot(exact, 'bo-', linewidth=1, markersize=2)
 plt.title('Accuracy para 5 conjuntos de atributos', fontsize=13, fontweight='bold')
 plt.xlabel('Conjunto')
 plt.ylabel('Accuracy')
 plt.grid(True, alpha=0.3)
+"""
 
 
 #%%
@@ -357,3 +359,4 @@ plt.tight_layout()
 plt.figtext(0.5, 0.01, f"FIGURA {contador_figuras}: Comparación de criterios con k={k_optimo_global}", 
             ha="center", fontsize=10, style='italic')
 plt.show()
+# %%
