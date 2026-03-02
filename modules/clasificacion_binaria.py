@@ -10,6 +10,7 @@ from sklearn.metrics import accuracy_score
 """
 Carga del dataset desde el archivo CSV.
 Se realiza una verificación inicial de la estructura de los datos.
+El contador de figuras comienza en 0
 """
 def cargar_datos(ruta_archivo: str) -> pd.DataFrame:
     """
@@ -42,6 +43,7 @@ def remane_labels(df):
     df['label'] = df['label'].replace(rename)
     return df
 df =  remane_labels(df)
+contador_figuras = 0
 
 #%% PUNTO A
 df_letra_O = df[(df['label'] == 'O')]
