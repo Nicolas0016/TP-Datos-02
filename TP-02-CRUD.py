@@ -48,8 +48,6 @@ from sklearn.metrics import confusion_matrix
 from sklearn.tree import DecisionTreeClassifier
 #%% FUNCIONES UTILIZADAS DURANTE EL INFORME
 def conteo_de_letters(df):
-
-    
     conteo = {}
     for _, row in df.iterrows():
         if row['label'] not in conteo:
@@ -76,7 +74,6 @@ def cargar_datos(ruta_archivo: str) -> pd.DataFrame:
         return df
     except FileNotFoundError:
         print("No se encontró el archivo")
-
 def remane_labels(df):
     letters_upper = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z']
     index_label = list(range(len(letters_upper)))
@@ -88,59 +85,32 @@ def remane_labels(df):
 def limpiar_ruido(df, umbral=200):
     """Versión de una línea para filtrar ruido."""
     df_limpio = df.copy()
-    if 'label' in df_limpio.columns:
-        df_limpio[df_limpio.columns[1:]] = df_limpio[df_limpio.columns[1:]].clip(upper=umbral)
-        df_limpio[df_limpio.columns[1:]] = df_limpio[df_limpio.columns[1:]].replace(umbral, 255)
-    else:
-        df_limpio = df_limpio.clip(upper=umbral)
-        df_limpio = df_limpio.replace(umbral, 255)
+    df_limpio[df_limpio.columns[1:]] = df_limpio[df_limpio.columns[1:]].clip(upper=umbral)
+    df_limpio[df_limpio.columns[1:]] = df_limpio[df_limpio.columns[1:]].replace(umbral, 255)
     return df_limpio
 def incrementar_contador_figuras():
     global contador_figuras
     contador_figuras += 1 
     return contador_figuras
-def mostrar_imagen_letra(df, indice, columna_label='label', dimension=(28, 28)):
-    """
-    Muestra una imagen de letra a partir de su índice en el DataFrame.
-    
-    Parametros
-    ----------
-    df : pd.DataFrame
-        DataFrame con los datos
-    indice : int
-        Índice de la fila a visualizar
-    columna_label : str
-        Nombre de la columna que contiene la etiqueta
-    dimension : tuple
-        Dimensiones de la imagen (alto, ancho)
-    """
-    letra = df.iloc[indice][columna_label]
-    
-    X = df.drop(columns=[columna_label])
-    
-    img = np.array(X.iloc[indice]).reshape(dimension[0], dimension[1])
-    
-    plt.figure(figsize=(5, 5))
-    plt.imshow(img, cmap='gray')
-    plt.title(f'Letra: {letra} - Índice: {indice}', fontsize=14, fontweight='bold')
-    plt.axis('off')
-    plt.show()
-    
-    return img
 def comparar_letras_superposicion(df, letra1, letra2,dimension=(28, 28)):
     contador_figuras = incrementar_contador_figuras()
+    # Agarro solo las letras de interes.
     idx1 = df[df['label'] == letra1].index[0]
     idx2 = df[df['label'] == letra2].index[0]
     
+    # saco lo molesto
     X = df.drop(columns=['label'])
     
     img1 = np.array(X.iloc[idx1]).reshape(dimension[0], dimension[1])
     img2 = np.array(X.iloc[idx2]).reshape(dimension[0], dimension[1])
     
-    img_superpuesta = np.ones((dimension[0], dimension[1], 3))  # Fondo blanco (1,1,1)
     
-    mask_ambas = ((img1 < 200) & (img2 < 200)) | ((img1==255) & (img2==255))
-    img_superpuesta[mask_ambas] = [0, 1, 0]  # Verde
+    img_superpuesta = np.ones((dimension[0], dimension[1], 3))  # Fondo blanco (1,1,1)
+    # me quedo con todos los pixeles que tengan estas caracteristicas:
+        # necesito que sean más oscuros que un gris
+        # y además en ambas imagenes debe habler un blanco blanco
+    mask_ambas = ((img1 < 200) & (img2 < 200)) | ((img1==255) & (img2==255)) 
+    img_superpuesta[mask_ambas] = [0, 1, 0]  # Verde (Red, Green, Blue) 
     
     # Visualizar
     fig, axes = plt.subplots(1, 3, figsize=(16, 4))
@@ -166,6 +136,7 @@ def comparar_letras_superposicion(df, letra1, letra2,dimension=(28, 28)):
     
     return img_superpuesta
 def rango_intercuartil(df):
+    # cosa que dijo clara durante la corrección del tp 2 (no le digan a pablito)
     Q1 = df.quantile(0.25)
     Q3 = df.quantile(0.75)
 
@@ -181,9 +152,6 @@ def mostrar_letra(letra, title):
     plt.figtext(0.5, 0.01, f"FIGURA {contador_figuras}", 
                 ha="center", fontsize=10, style='italic')
     plt.show()
-
-
-
 def visualizar_tipografia_letra(df, letra,n_muestras=9, dimension=(28, 28)):
     """
     Muestra múltiples muestras de una misma letra para ver variabilidad.
@@ -196,25 +164,26 @@ def visualizar_tipografia_letra(df, letra,n_muestras=9, dimension=(28, 28)):
     rows = int(n_muestras/cols)
     
     fig, axes = plt.subplots(rows, cols, figsize=(12, rows*3))
+    # aplana la matriz de ejes para iterar sobre ellos con solo el índice i 
     axes = axes.flatten()
     
     X = df.drop(columns=['label'])
     
     for i, idx in enumerate(indices):
         img = np.array(X.iloc[idx]).reshape(dimension[0], dimension[1])
+        # Mete la imagen en su espacio que le corresponde.
         axes[i].imshow(img, cmap='gray')
         axes[i].set_title(f'Muestra {i+1}', fontsize=10)
-        axes[i].axis('off')
+        axes[i].axis('off') # Oculta los ejes (números y ticks) para limpieza 
     
     for i in range(len(indices), len(axes)):
-        axes[i].axis('off')
+        axes[i].axis('off') # Oculta los ejes
     
     plt.suptitle(f'Variabilidad en Letra {letra} - {len(indices)} muestras de 1016', 
                  fontsize=16, fontweight='bold')
     plt.figtext(0.5, 0.01, f"FIGURA {contador_figuras}: Variabilidad en letra {letra}", 
                 ha="center", fontsize=23, style='italic')
     plt.show()
-
 def visualizar_todas_letras_grilla(df, dimension=(28, 28), tipografia=0):
     """
     Muestra una grilla con todas las letras del alfabeto (primera muestra de cada una).
@@ -464,7 +433,7 @@ for n_atributos in tamanos_atributos:
 # =============================================================================
 ## Comparación de criterios
 # =============================================================================
-contador_figuras += 1
+contador_figuras = 17
 plt.figure(figsize=(12, 8))
 
 plt.plot(tamanos_atributos, resultados_IQR, 'bo-', linewidth=2, markersize=8, 
@@ -506,14 +475,14 @@ plt.xlim(2, 1000)
 plt.ylim(0.85, 1.005)
 plt.xticks(tamanos_atributos)
 plt.tight_layout()
-plt.figtext(0.5, 0.01, f"FIGURA {contador_figuras}: Comparación IQR vs Diferencia de Medias", 
-            ha="center", fontsize=10, style='italic')
+plt.figtext(0.5, 0, f"FIGURA {contador_figuras}: Comparación IQR vs Diferencia de Medias", 
+            ha="center", fontsize=15, style='italic')
 plt.show()
 
 # =============================================================================
 ## Modelos de KNN utilizando distintos atributos y distintos valores de k (vecinos).
 # =============================================================================
-contador_figuras += 1
+contador_figuras = 18
 
 # Crear matriz de resultados para diferentes k y cantidades de atributos
 valores_k = [1, 3, 5, 7, 9, 11, 15]
@@ -535,6 +504,7 @@ for n_atributos in tamanos_atributos_exp:
         })
 print(":D")
 df_resultados = pd.DataFrame(resultados_completos)
+#%% 
 # Heatmap
 plt.figure(figsize=(14, 8))
 heatmap_data = df_resultados.pivot_table(
@@ -546,7 +516,6 @@ heatmap_data = df_resultados.pivot_table(
 plt.imshow(heatmap_data, aspect='auto', cmap='Oranges', interpolation='nearest')
 plt.colorbar(label='Accuracy', shrink=0.8)
 
-# Configurar ejes
 plt.xticks(range(len(valores_k)), valores_k, fontsize=11)
 plt.yticks(range(len(tamanos_atributos_exp)), tamanos_atributos_exp, fontsize=11)
 
@@ -564,8 +533,8 @@ for i in range(len(tamanos_atributos_exp)):
                 ha='center', va='center', color=color_texto, fontsize=9, fontweight='bold')
 
 plt.tight_layout()
-plt.figtext(0.5, 0.01, f"FIGURA {contador_figuras}: Heatmap de resultados KNN", 
-            ha="center", fontsize=10, style='italic')
+plt.figtext(0.43, 0, f"FIGURA {contador_figuras}: Heatmap de resultados KNN", 
+            ha="center", fontsize=15, style='italic')
 plt.show()
 
 
