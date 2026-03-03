@@ -193,11 +193,6 @@ plt.figtext(0.1,0.04,'Figura 13')
 plt.show()
 
 print(f"Modelo ganador: {mejor_modelo} \nAccuracy: {round(grid.best_score_,3)} \nProfundidad {mejor_profundidad}")
-#grafico del arbol
-plt.figure(figsize=(20,10))
-plot_tree(mejor_modelo, filled=True, fontsize=10, rounded=True, 
-          feature_names=X.columns.tolist(), class_names=mejor_modelo.classes_)
-plt.show()
 
 #%% PUNTO 4
 #entreno al modelo ganador con todos los datos
