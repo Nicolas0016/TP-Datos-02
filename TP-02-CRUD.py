@@ -688,3 +688,24 @@ plt.ylabel("Respuesta correcta")
 plt.text(x = 20,y = 1,s=f"Accuracy: {accuracy}", fontsize = 11,color = 'Darkgreen')
 plt.show()
 
+precision_por_letra = precision_score(y_held_out, y_pred, average=None)
+plt.figure(figsize=(14, 6))
+barras = plt.bar( ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'], precision_por_letra,edgecolor='black', linewidth=1)
+
+# Añadir los valores en las barras
+for i, (barra, valor) in enumerate(zip(barras, precision_por_letra)):
+    plt.text(barra.get_x() + barra.get_width()/2, barra.get_height() + 0.01, 
+             f'{round(valor, 3)}', ha='center', va='bottom', fontsize=9, rotation=0)
+
+plt.axhline(y=np.mean(precision_por_letra), color='red', linestyle='--', linewidth=2, 
+            label=f'Precisión promedio: {round(np.mean(precision_por_letra),3)}')
+
+plt.title('Precisión del modelo por letra (árbol de decisión)', fontsize=16, fontweight='bold')
+plt.xlabel('Letra', fontsize=12)
+plt.ylabel('Precisión', fontsize=12)
+plt.ylim(0, 1.1)
+plt.grid(axis='y', alpha=0.3)
+plt.legend(loc='lower right')
+plt.figtext(0.5, -0.05, 'Figura 14 - Precisión por letra', ha='center', fontsize=10)
+plt.tight_layout()
+plt.show()
