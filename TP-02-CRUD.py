@@ -323,21 +323,23 @@ visualizar_todas_letras_grilla(df)
 visualizar_todas_letras_grilla(df, tipografia=8)
 
 # =============================================================================
+#### FUNCIÓN PARA VISUALIZAR MÚLTIPLES MUESTRAS DE UNA LETRA
+# =============================================================================
+
+visualizar_tipografia_letra(df, 'O')
+
+# =============================================================================
 #### COMPARAR PARES DE LETRAS
 # =============================================================================
 
 comparar_letras_superposicion(df, 'O', 'Q')
 comparar_letras_superposicion(df, 'P', 'R')
-comparar_letras_superposicion(df, 'I', 'L')
+comparar_letras_superposicion(df, 'S', 'M')
 df = limpiar_ruido(df)
 comparar_letras_superposicion(df, 'O', 'Q')
 comparar_letras_superposicion(df, 'P', 'R')
-comparar_letras_superposicion(df, 'I', 'L')
-# =============================================================================
-#### FUNCIÓN PARA VISUALIZAR MÚLTIPLES MUESTRAS DE UNA LETRA
-# =============================================================================
+comparar_letras_superposicion(df, 'S', 'M')
 
-visualizar_tipografia_letra(df, 'O')
 
 #%% CLASIFICACIÓN BINARIA
 
@@ -361,7 +363,7 @@ else:
     print("El dataset no está perfectamente balanceado")
 
 
-# =============================================================================
+#%% =============================================================================
 #### Separar los datos en conjuntos de train y test
 # =============================================================================
 
@@ -395,15 +397,14 @@ diferencia_IQR = abs(IQR_O - IQR_L)
 
 # Visualizar las diferencias (mediana y rango interquartil)
 mostrar_letra(media_O, 'Media de O') 
-mostrar_letra(IQR_O, 'Rango Intercuartílico de O') 
-
-mostrar_letra(media_L, 'Media de L') 
+mostrar_letra(media_L, 'Media de L')
+mostrar_letra(IQR_O, 'Rango Intercuartílico de O')  
 mostrar_letra(IQR_L, 'Rango Intercuartílico de L')
 
 mostrar_letra(diferencia_medias, 'Diferencia de Medias\n(O vs L)')
 mostrar_letra(diferencia_IQR, 'Diferencia de IQR\n(O vs L)')
 
-# =============================================================================
+#%% =============================================================================
 # Comparación de criterios de selección (IQR vs Diferencia de Medias)
 # =============================================================================
 atributos_por_IQR = diferencia_IQR.sort_values(ascending=False).index.tolist()
@@ -433,7 +434,7 @@ for n_atributos in tamanos_atributos:
 # =============================================================================
 ## Comparación de criterios
 # =============================================================================
-contador_figuras = 17
+incrementar_contador_figuras()
 plt.figure(figsize=(12, 8))
 
 plt.plot(tamanos_atributos, resultados_IQR, 'bo-', linewidth=2, markersize=8, 
@@ -482,7 +483,7 @@ plt.show()
 # =============================================================================
 ## Modelos de KNN utilizando distintos atributos y distintos valores de k (vecinos).
 # =============================================================================
-contador_figuras = 18
+incrementar_contador_figuras()
 
 # Crear matriz de resultados para diferentes k y cantidades de atributos
 valores_k = [1, 3, 5, 7, 9, 11, 15]
@@ -551,7 +552,7 @@ X_dev, X_held_out, y_dev, y_held_out = train_test_split(X, y,test_size=0.2,strat
 X_train, X_test, y_train, y_test = train_test_split(X_dev, y_dev,test_size=0.3,stratify=y_dev)
 
 
-# =============================================================================
+#%% =============================================================================
 #### Ajustar un modelo de árbol. Probar con distintas profundidades.
 # =============================================================================
 scores = []
@@ -569,14 +570,15 @@ for profundidad in range(1,21):
 
     print(f"{profundidad}: {accuracy}")
 
-#Grafico del accuracy por profundidad
+# %%
+incrementar_contador_figuras()
 plt.plot(range(1,21), scores, marker='o', linestyle='-',color = 'Blue')
 plt.title('Accuracy del arbol por profundidad')
 plt.xlabel('Profundidad')
 plt.ylabel('Accuracy')
 plt.grid(True)
 plt.xticks(range(0,21,2))
-plt.figtext(0.1,0.03,'Figura 10')
+plt.figtext(0.1,0.03,f"Figura {contador_figuras}")
 
 indx_de_max = np.argmax(scores) #buscamos el indice del mayor accuracy para resaltarlo
 plt.scatter(range(1,21)[indx_de_max],scores[indx_de_max],color = 'magenta',zorder = 2)
@@ -584,7 +586,7 @@ plt.scatter(range(1,21)[indx_de_max],scores[indx_de_max],color = 'magenta',zorde
 plt.show()
 
 
-# =============================================================================
+#%% =============================================================================
 #### Comparar y seleccionar distintos árboles de decisión, con distintos hiperparámetos. 
 # =============================================================================
 model = DecisionTreeClassifier(random_state=42)
