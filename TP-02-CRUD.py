@@ -570,7 +570,6 @@ for profundidad in range(1,21):
 
     print(f"{profundidad}: {accuracy}")
 
-# %%
 incrementar_contador_figuras()
 plt.plot(range(1,21), scores, marker='o', linestyle='-',color = 'Blue')
 plt.title('Accuracy del arbol por profundidad')
@@ -614,7 +613,7 @@ plt.title('Tiempo de entrenamiento por profundidad')
 plt.xlabel('Profundidad')
 plt.ylabel('Tiempo (segundos)')
 plt.grid(True)
-plt.figtext(0.1,0.04,'Figura 11')
+plt.figtext(0.1,0.04,'Figura 22')
 plt.show()
 
 plt.figure(figsize=(8,6))
@@ -623,7 +622,7 @@ plt.title('Accuracy por profundidad')
 plt.xlabel('Profundidad')
 plt.ylabel('Accuracy')
 plt.grid(True)
-plt.figtext(0.1,0.04,'Figura 12')
+plt.figtext(0.1,0.04,'Figura 21')
 plt.show()
 
 plt.figure(figsize=(8,6))
@@ -632,7 +631,7 @@ plt.title('Accuracy por tiempo')
 plt.xlabel('Tiempo (segundos)')
 plt.ylabel('Accuracy')
 plt.grid(True)
-plt.figtext(0.1,0.04,'Figura 13')
+plt.figtext(0.1,0.04,'Figura 20')
 plt.show()
 
 print(f"Modelo ganador: {mejor_modelo} \nAccuracy: {round(grid.best_score_,2)} \nProfundidad {mejor_profundidad}")
@@ -680,3 +679,4 @@ plt.legend(loc='lower right')
 plt.figtext(0.5, -0.05, 'Figura 14 - Precisión por letra', ha='center', fontsize=10)
 plt.tight_layout()
 plt.show()
+# %%
