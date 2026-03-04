@@ -85,6 +85,7 @@ def remane_labels(df):
 def limpiar_ruido(df, umbral=200):
     """Versión de una línea para filtrar ruido."""
     df_limpio = df.copy()
+    # convierte todos los valores >200 en 200 
     df_limpio[df_limpio.columns[1:]] = df_limpio[df_limpio.columns[1:]].clip(upper=umbral)
     df_limpio[df_limpio.columns[1:]] = df_limpio[df_limpio.columns[1:]].replace(umbral, 255)
     return df_limpio
@@ -126,7 +127,7 @@ def comparar_letras_superposicion(df, letra1, letra2,dimension=(28, 28)):
     axes[2].imshow(img_superpuesta)
     axes[2].set_title('Superposición', fontsize=14, fontweight='bold')
     axes[2].axis('off')
-    
+    # Título general de toda la figura
     plt.suptitle(f'Comparación {letra1} vs {letra2} - Superposición', 
                  fontsize=16, fontweight='bold')
     plt.tight_layout()
@@ -152,7 +153,7 @@ def mostrar_letra(letra, title):
     plt.figtext(0.5, 0.01, f"FIGURA {contador_figuras}", 
                 ha="center", fontsize=10, style='italic')
     plt.show()
-def visualizar_tipografia_letra(df, letra,n_muestras=9, dimension=(28, 28)):
+def visualizar_tipografia_letra(df, letra,n_muestras=9):
     """
     Muestra múltiples muestras de una misma letra para ver variabilidad.
     """
@@ -170,7 +171,7 @@ def visualizar_tipografia_letra(df, letra,n_muestras=9, dimension=(28, 28)):
     X = df.drop(columns=['label'])
     
     for i, idx in enumerate(indices):
-        img = np.array(X.iloc[idx]).reshape(dimension[0], dimension[1])
+        img = np.array(X.iloc[idx]).reshape(28,28)
         # Mete la imagen en su espacio que le corresponde.
         axes[i].imshow(img, cmap='gray')
         axes[i].set_title(f'Muestra {i+1}', fontsize=10)
@@ -178,13 +179,13 @@ def visualizar_tipografia_letra(df, letra,n_muestras=9, dimension=(28, 28)):
     
     for i in range(len(indices), len(axes)):
         axes[i].axis('off') # Oculta los ejes
-    
+    # Título general de toda la figura
     plt.suptitle(f'Variabilidad en Letra {letra} - {len(indices)} muestras de 1016', 
                  fontsize=16, fontweight='bold')
     plt.figtext(0.5, 0.01, f"FIGURA {contador_figuras}: Variabilidad en letra {letra}", 
                 ha="center", fontsize=23, style='italic')
     plt.show()
-def visualizar_todas_letras_grilla(df, dimension=(28, 28), tipografia=0):
+def visualizar_todas_letras_grilla(df, tipografia=0):
     """
     Muestra una grilla con todas las letras del alfabeto (primera muestra de cada una).
     """
@@ -199,7 +200,7 @@ def visualizar_todas_letras_grilla(df, dimension=(28, 28), tipografia=0):
         idx = df[df['label'] == letra].index[tipografia]
         
         X = df.drop(columns=['label'])
-        img = np.array(X.iloc[idx]).reshape(dimension[0], dimension[1])
+        img = np.array(X.iloc[idx]).reshape(28, 28)
         
         axes[i].imshow(img, cmap='gray')
         axes[i].set_title(f'Letra {letra}', fontsize=12, fontweight='bold')
@@ -207,13 +208,15 @@ def visualizar_todas_letras_grilla(df, dimension=(28, 28), tipografia=0):
     
     for i in range(0, len(axes)):
         axes[i].axis('off')
-    
+    #Título general de toda la figura
     plt.suptitle('Todas las Letras del Alfabeto', 
                  fontsize=16, fontweight='bold', y=1.02)
     plt.tight_layout()
     plt.figtext(0.5, 0, f"FIGURA {incrementar_contador_figuras()}: Distribución de letras en el dataset", 
                 ha="center", fontsize=23, style='italic')
     plt.show()
+
+
 #%% CARGA DE DATOS
 contador_figuras = 0
 DATA_PATH = './data/letras.csv'
