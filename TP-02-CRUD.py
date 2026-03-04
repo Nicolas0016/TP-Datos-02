@@ -589,7 +589,10 @@ plt.show()
 #### Comparar y seleccionar distintos árboles de decisión, con distintos hiperparámetos. 
 # =============================================================================
 model = DecisionTreeClassifier(random_state=42)
-param_grid = {'max_depth':range(1,11)}#nos piden usar profundidades de 1 a 10
+param_grid = {
+    'max_depth': range(1,11),#nos piden usar profundidades de hasta 10
+    'criterion': ['gini', 'entropy']
+}
 
 grid = GridSearchCV(estimator=model,param_grid=param_grid,cv=5,scoring='accuracy',n_jobs=-1) #si se les traba todo pongan el n_jobs en 1 (-1 es que usa todos los nucleos del cpu, 1 es uno solo)
 #cv = 5 es que se van dividir en 5 grupos
@@ -598,47 +601,46 @@ grid.fit(X_train,y_train)
 
 mejor_modelo = grid.best_estimator_
 mejor_profundidad = grid.best_params_['max_depth']
+mejor_criterio = grid.best_params_['criterion']
 
-#GRAFICO (pongo estos pero habria que dejar solo uno o dos, o combinarlos)
 resultados = pd.DataFrame(grid.cv_results_)
 
-profundidades = resultados['param_max_depth']
-accuracy_promedio = resultados['mean_test_score']
-tiempo_promedio = resultados['mean_fit_time']
-#accracy_deriv_estandar = resultados['std_test_score']
+res_gini = resultados[resultados['param_criterion'] == 'gini']
+res_entropy = resultados[resultados['param_criterion'] == 'entropy']
 
+#accuracy por profundidad
 plt.figure(figsize=(8,6))
-plt.plot(profundidades, tiempo_promedio, marker='o', linestyle='-',color = 'Red')
-plt.title('Tiempo de entrenamiento por profundidad')
-plt.xlabel('Profundidad')
-plt.ylabel('Tiempo (segundos)')
-plt.grid(True)
-plt.figtext(0.1,0.04,'Figura 22')
-plt.show()
 
-plt.figure(figsize=(8,6))
-plt.plot(profundidades, accuracy_promedio, marker='o', linestyle='-',color = 'Green')
-plt.title('Accuracy por profundidad')
+plt.plot(res_entropy['param_max_depth'],res_entropy['mean_test_score'],marker='o',label='Entropy')
+plt.plot(res_gini['param_max_depth'],res_gini['mean_test_score'],marker='o',label='Gini')
+
+plt.title('Accuracy por profundidad y criterio')
 plt.xlabel('Profundidad')
 plt.ylabel('Accuracy')
-plt.grid(True)
-plt.figtext(0.1,0.04,'Figura 21')
-plt.show()
-
-plt.figure(figsize=(8,6))
-plt.plot(tiempo_promedio, accuracy_promedio, marker='o', linestyle='-',color = 'Blue')
-plt.title('Accuracy por tiempo')
-plt.xlabel('Tiempo (segundos)')
-plt.ylabel('Accuracy')
+plt.legend()
 plt.grid(True)
 plt.figtext(0.1,0.04,'Figura 20')
 plt.show()
 
-print(f"Modelo ganador: {mejor_modelo} \nAccuracy: {round(grid.best_score_,2)} \nProfundidad {mejor_profundidad}")
+#accuracy por tiempo
+plt.figure(figsize=(8,6))
+
+plt.plot(res_entropy['mean_fit_time'],res_entropy['mean_test_score'],marker='o',label='Entropy')
+plt.plot(res_gini['mean_fit_time'],res_gini['mean_test_score'],marker='o',label='Gini')
+
+plt.title('Accuracy por tiempo y criterio')
+plt.xlabel('tiempo')
+plt.ylabel('Accuracy')
+plt.legend()
+plt.grid(True)
+plt.figtext(0.1,0.04,'Figura 21')
+plt.show()
+
+print(f"Criterio ganador: {mejor_criterio} \nAccuracy: {round(grid.best_score_,2)} \nProfundidad {mejor_profundidad}")
 
 
 # =============================================================================
-#### Entrenar el modelo elegido a partir del inciso previo, ahora en todo el conjunto de desarrollo.
+#%%### Entrenar el modelo elegido a partir del inciso previo, ahora en todo el conjunto de desarrollo.
 # =============================================================================
 #entreno al modelo ganador con todos los datos
 mejor_modelo.fit(X_dev,y_dev)
